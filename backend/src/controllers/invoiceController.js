@@ -1,24 +1,4 @@
 // backend/src/controllers/invoiceController.js
-/**
- * Invoice Controller — AutoFlow
- * =================================================
- * Responsibilities:
- * - Handle invoice creation (multipart PDF upload + metadata)
- * - Validate incoming fields
- * - Generate reliable invoiceId
- * - Save invoice document with filePath pointing to stored PDF
- * - Trigger non-blocking email notifications (Phase 5)
- * - Emit audit logs for compliance (Phase 6)
- * - Provide `getMyInvoices` for the logged-in user
- *
- * SELF-AUDIT (logic / security / validation)
- * - File uploads: multer enforces PDF-only + size limit; server controls final filenames.
- * - InvoiceId: generated via Mongo-backed counter; controller retries on duplicate-key.
- * - Atomicity: temp file is cleaned on validation/error paths; final rename happens before DB save.
- * - Emails & audit logs are fire-and-forget and cannot break the API response.
- * - Audit entries record user id, role, IP, resource, timestamp, and a small metadata payload.
- */
-
 const fs = require('fs');
 const path = require('path');
 const multer = require('multer');
@@ -35,10 +15,8 @@ const UPLOAD_DIR =
 const MAX_FILE_SIZE = parseInt(process.env.MAX_UPLOAD_SIZE || '5242880', 10);
 const MAX_RETRIES = 3;
 
-// Ensure upload directory exists
 fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 
-/* -------------------- Multer Configuration -------------------- */
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, UPLOAD_DIR),
   filename: (req, file, cb) => {
@@ -71,7 +49,6 @@ const uploadSingle = (req, res) =>
     });
   });
 
-/* -------------------- POST /api/invoice/create -------------------- */
 const createInvoice = async (req, res) => {
   try {
     await uploadSingle(req, res);
@@ -133,7 +110,7 @@ const createInvoice = async (req, res) => {
 
         const saved = await invoice.save();
 
-        /* -------- Phase 5: Email (NON-BLOCKING) -------- */
+        // Non-blocking email notification
         (async () => {
           try {
             await emailService.sendInvoiceSubmittedEmail({
@@ -149,10 +126,7 @@ const createInvoice = async (req, res) => {
           }
         })();
 
-        /* -------- Phase 6: Audit Log (NON-BLOCKING) --------
-           Record the submission event with minimal metadata.
-           logAction will catch errors internally so we don't await it here.
-        */
+        // Non-blocking audit log
         try {
           logAction({
             req,
@@ -166,7 +140,6 @@ const createInvoice = async (req, res) => {
             },
           });
         } catch (auditErr) {
-          // Defensive: log but do not fail the request
           console.error('Audit log invocation error:', auditErr?.message || auditErr);
         }
 
@@ -174,14 +147,11 @@ const createInvoice = async (req, res) => {
       } catch (err) {
         lastError = err;
 
-        // Duplicate invoiceId (rare) — retry
         if (err?.code === 11000) {
           console.warn(`Duplicate invoiceId, retrying (${attempt})`);
-          // attempt continues
           continue;
         }
 
-        // Cleanup any uploaded file if exists
         try {
           if (req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
         } catch (_) {}
@@ -202,7 +172,6 @@ const createInvoice = async (req, res) => {
   }
 };
 
-/* -------------------- GET /api/invoice/my -------------------- */
 const getMyInvoices = async (req, res) => {
   try {
     if (!req.user || !req.user._id) {
