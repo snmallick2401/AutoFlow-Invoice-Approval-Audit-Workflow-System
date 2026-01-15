@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AutoFlow — Sign In</title>
+
+  <link rel="stylesheet" href="../css/base.css" />
+  <link rel="stylesheet" href="../css/layout.css" />
+  <link rel="stylesheet" href="../css/components.css" />
+  <link rel="stylesheet" href="../css/theme.css" />
+
+  <script>
+    (function () {
+      try {
+        const local = localStorage.getItem("theme");
+        const sys = window.matchMedia("(prefers-color-scheme: dark)").matches;
+        if (local === "dark" || (!local && sys)) {
+          document.documentElement.classList.add("dark");
+        }
+      } catch (e) {}
+    })();
+  </script>
+
+  <style>
+    .auth-page {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      background: var(--bg);
+      padding: 1rem;
+      position: relative;
+    }
+
+    .auth-panel {
+      width: 100%;
+      max-width: 420px;
+      padding: 2.5rem;
+      background: var(--card);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow-md);
+      animation: fadeIn 0.35s ease-out;
+    }
+
+    .brand-header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    .brand-logo-large {
+      font-size: 3rem;
+      line-height: 1;
+      margin-bottom: 0.5rem;
+    }
+
+    .password-wrapper {
+      position: relative;
+    }
+
+    .password-wrapper input {
+      padding-right: 2.75rem;
+    }
+
+    .password-toggle-btn {
+      position: absolute;
+      right: 0.6rem;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      color: var(--muted);
+      cursor: pointer;
+      padding: 0.25rem;
+      display: flex;
+      align-items: center;
+      opacity: 0.6;
+      transition: opacity 0.2s, color 0.2s;
+    }
+
+    .password-toggle-btn:hover {
+      opacity: 1;
+      color: var(--primary);
+    }
+
+    .auth-footer {
+      margin-top: 2rem;
+      text-align: center;
+      border-top: 1px solid var(--border);
+      padding-top: 1rem;
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+
+    .theme-floater {
+      position: absolute;
+      top: 1.25rem;
+      right: 1.25rem;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+
+<body class="auth-page">
+
+  <div class="theme-floater">
+    <button id="themeToggle" class="icon-btn" aria-label="Toggle theme" title="Toggle dark mode">
+      🌙
+    </button>
+  </div>
+
+  <main class="auth-panel" role="main" aria-labelledby="loginTitle">
+    <header class="brand-header">
+      <div class="brand-logo-large">🔁</div>
+      <h1 id="loginTitle" class="brand-name" style="font-size:1.5rem;">AutoFlow</h1>
+      <p class="brand-sub">Invoice & Approval Workflow</p>
+    </header>
+
+    <div
+      id="loginError"
+      class="status-rejected"
+      hidden
+      style="margin-bottom:1.5rem; text-align:center; display:none;" 
+      role="alert"
+    ></div>
+
+    <form id="loginForm" autocomplete="on" novalidate>
+      <div class="form-group">
+        <label for="email" style="font-size:0.9rem; font-weight:500;">Email address</label>
+        <input
+          id="email"
+          name="email"
+          type="email"
+          required
+          autocomplete="email"
+          placeholder="name@company.com"
+        />
+      </div>
+
+      <div class="form-group">
+        <div style="display:flex; justify-content:space-between; margin-bottom:0.4rem;">
+          <label for="password" style="font-size:0.9rem; font-weight:500;">Password</label>
+          <span class="muted" style="font-size:0.8rem;">Forgot?</span>
+        </div>
+
+        <div class="password-wrapper">
+          <input
+            id="password"
+            name="password"
+            type="password"
+            required
+            autocomplete="current-password"
+            placeholder="••••••••"
+          />
+          <button
+            type="button"
+            id="togglePassword"
+            class="password-toggle-btn"
+            aria-label="Show password"
+          >
+            👁
+          </button>
+        </div>
+      </div>
+
+      <div class="form-group" style="margin:1rem 0 1.5rem;">
+        <label style="display:flex; justify-content:space-between; align-items:center;">
+          <span style="font-size:0.9rem;">Keep me signed in</span>
+          <input id="remember" type="checkbox" />
+        </label>
+      </div>
+
+      <button
+        id="loginBtn"
+        type="submit"
+        class="btn primary"
+        style="width:100%; padding:0.75rem;"
+      >
+        <span id="loginBtnText">Sign In</span>
+        <span id="loginSpinner" class="spinner" hidden aria-hidden="true"></span>
+      </button>
+    </form>
+
+    <footer class="auth-footer">
+      Made with ❤️ by SN
+    </footer>
+  </main>
+
+  <noscript>
+    <div style="position:fixed; bottom:0; inset-inline:0; background:var(--danger); color:#fff; text-align:center; padding:1rem;">
+      JavaScript is required to sign in.
+    </div>
+  </noscript>
+
+  <script>window.API_BASE_URL = "http://localhost:5000";</script>
+  <script src="../js/theme.js"></script>
+  <script src="../js/api.js"></script>
+  <script src="../js/auth.js"></script>
+</body>
+</html>
