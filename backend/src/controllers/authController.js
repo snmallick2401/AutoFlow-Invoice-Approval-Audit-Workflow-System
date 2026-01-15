@@ -1,24 +1,8 @@
 // backend/src/controllers/authController.js
-
-/**
- * Auth Controller — AutoFlow (FIXED)
- * =================================================
- * Frontend-compatible responses
- * Secure JWT handling
- * Phase-6 audit logging preserved
- */
-
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 const { logAction } = require("../utils/auditLogger");
 
-/* =================================================
-   Helpers
-================================================= */
-
-/**
- * Generate JWT token
- */
 const generateToken = (user) => {
   if (!process.env.JWT_SECRET) {
     throw new Error("JWT_SECRET not configured");
@@ -31,9 +15,6 @@ const generateToken = (user) => {
   );
 };
 
-/**
- * Normalize user object for frontend
- */
 const sanitizeUser = (user) => ({
   id: user._id.toString(),
   name: user.name,
@@ -41,9 +22,6 @@ const sanitizeUser = (user) => ({
   role: user.role,
 });
 
-/* =================================================
-   POST /api/auth/register
-================================================= */
 const register = async (req, res) => {
   try {
     const { name, email, password, role } = req.body;
@@ -64,7 +42,7 @@ const register = async (req, res) => {
     const user = new User({
       name: name.trim(),
       email: normalizedEmail,
-      password, // hashed via schema hook
+      password,
       role,
     });
 
@@ -72,7 +50,6 @@ const register = async (req, res) => {
 
     const token = generateToken(user);
 
-    // Audit (non-blocking)
     try {
       logAction({
         req,
@@ -92,9 +69,6 @@ const register = async (req, res) => {
   }
 };
 
-/* =================================================
-   POST /api/auth/login
-================================================= */
 const login = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -150,7 +124,6 @@ const login = async (req, res) => {
       });
     } catch (_) {}
 
-    // ✅ FRONTEND-COMPATIBLE RESPONSE
     return res.status(200).json({
       token,
       user: sanitizeUser(user),
@@ -161,16 +134,12 @@ const login = async (req, res) => {
   }
 };
 
-/* =================================================
-   GET /api/auth/me
-================================================= */
 const getMe = async (req, res) => {
   try {
     if (!req.user) {
       return res.status(401).json({ message: "Not authenticated" });
     }
 
-    // ✅ FRONTEND EXPECTS USER OBJECT DIRECTLY
     return res.status(200).json(sanitizeUser(req.user));
   } catch (err) {
     console.error("getMe error:", err);
