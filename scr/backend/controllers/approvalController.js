@@ -1,54 +1,9 @@
 // backend/src/controllers/approvalController.js
-/**
- * Approval Controller — AutoFlow
- * =================================================
- * Responsibilities:
- * - Approve / reject invoices via workflow engine
- * - Enforce authentication + RBAC (via middleware)
- * - Persist approval history and status changes
- * - Trigger non-blocking email notifications (Phase 5)
- * - Emit immutable audit logs for compliance (Phase 6)
- * - Expose pending invoices per role
- *
- * ===================== SELF-AUDIT =====================
- *
- * LOGIC
- * - Workflow rules live ONLY in workflowEngine
- * - Controller orchestrates: fetch → validate → process → save
- *
- * SECURITY
- * - Requires authenticated user (protect middleware)
- * - Role filtering enforced by roleGuard + workflowEngine
- * - Never trusts client input for workflow state
- *
- * DATA INTEGRITY
- * - Approval history is append-only
- * - Finalized invoices cannot be mutated
- *
- * EMAIL (PHASE 5)
- * - Email triggered ONLY after successful DB save
- * - Email failures NEVER affect API response
- * - Fire-and-forget, fault-tolerant side effect
- *
- * AUDIT (PHASE 6)
- * - Every approve / reject action is logged immutably
- * - Audit logging is non-blocking and never breaks approval flow
- *
- * FAILURE MODES
- * - 401 → unauthenticated
- * - 404 → invoice not found
- * - 400 → invalid workflow action
- * - 500 → unexpected server error
- */
-
 const Invoice = require('../models/Invoice');
 const { processAction, getExpectedRole } = require('../utils/workflowEngine');
 const emailService = require('../utils/emailService');
 const { logAction } = require('../utils/auditLogger');
 
-// --------------------------------------------------
-// PUT /api/invoice/approve/:id
-// --------------------------------------------------
 const approveInvoice = async (req, res) => {
   try {
     if (!req.user || !req.user._id || !req.user.role) {
@@ -60,7 +15,6 @@ const approveInvoice = async (req, res) => {
       return res.status(404).json({ message: 'Invoice not found' });
     }
 
-    // Apply workflow logic
     processAction({
       invoice,
       user: {
@@ -73,7 +27,7 @@ const approveInvoice = async (req, res) => {
 
     const saved = await invoice.save();
 
-    /* -------- Phase 5: Email (NON-BLOCKING) -------- */
+    // Non-blocking email notification
     (async () => {
       try {
         await emailService.sendInvoiceApprovedEmail({
@@ -89,7 +43,7 @@ const approveInvoice = async (req, res) => {
       }
     })();
 
-    /* -------- Phase 6: Audit Log (NON-BLOCKING) -------- */
+    // Non-blocking audit log
     try {
       logAction({
         req,
@@ -125,9 +79,6 @@ const approveInvoice = async (req, res) => {
   }
 };
 
-// --------------------------------------------------
-// PUT /api/invoice/reject/:id
-// --------------------------------------------------
 const rejectInvoice = async (req, res) => {
   try {
     if (!req.user || !req.user._id || !req.user.role) {
@@ -139,7 +90,6 @@ const rejectInvoice = async (req, res) => {
       return res.status(404).json({ message: 'Invoice not found' });
     }
 
-    // Apply workflow logic
     processAction({
       invoice,
       user: {
@@ -152,7 +102,7 @@ const rejectInvoice = async (req, res) => {
 
     const saved = await invoice.save();
 
-    /* -------- Phase 5: Email (NON-BLOCKING) -------- */
+    // Non-blocking email notification
     (async () => {
       try {
         await emailService.sendInvoiceRejectedEmail({
@@ -169,7 +119,7 @@ const rejectInvoice = async (req, res) => {
       }
     })();
 
-    /* -------- Phase 6: Audit Log (NON-BLOCKING) -------- */
+    // Non-blocking audit log
     try {
       logAction({
         req,
@@ -205,16 +155,12 @@ const rejectInvoice = async (req, res) => {
   }
 };
 
-// --------------------------------------------------
-// GET /api/invoice/pending
-// --------------------------------------------------
 const getPendingInvoices = async (req, res) => {
   try {
     if (!req.user || !req.user.role) {
       return res.status(401).json({ message: 'Authentication required' });
     }
 
-    // Employees never approve invoices
     if (req.user.role === 'employee') {
       return res.status(200).json({ invoices: [] });
     }
