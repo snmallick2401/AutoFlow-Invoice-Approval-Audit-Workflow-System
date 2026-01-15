@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AutoFlow — Approvals</title>
+
+  <link rel="stylesheet" href="../css/base.css" />
+  <link rel="stylesheet" href="../css/layout.css" />
+  <link rel="stylesheet" href="../css/components.css" />
+  <link rel="stylesheet" href="../css/theme.css" />
+
+  <script>
+    (function () {
+      try {
+        const localTheme = localStorage.getItem("theme");
+        const sysTheme = window.matchMedia("(prefers-color-scheme: dark)").matches;
+        if (localTheme === "dark" || (!localTheme && sysTheme)) {
+          document.documentElement.classList.add("dark");
+        } else {
+          document.documentElement.classList.remove("dark");
+        }
+      } catch (e) {}
+    })();
+  </script>
+</head>
+
+<body class="app">
+
+  <header class="navbar" role="banner">
+    <div class="nav-left">
+      <button id="sidebarToggle" class="icon-btn" aria-label="Toggle Navigation">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+      </button>
+
+      <a href="dashboard.html" class="brand">
+        <span class="brand-logo">🔁</span>
+        <span class="brand-name">AutoFlow</span>
+      </a>
+    </div>
+
+    <div class="nav-right">
+      <div class="user-info">
+        <span id="userName" class="user-name">Loading...</span>
+        <span id="userRole" class="role-badge">...</span>
+      </div>
+
+      <button id="themeToggle" class="icon-btn" aria-label="Toggle Dark Mode" title="Switch Theme">
+        🌙
+      </button>
+
+      <button id="logoutBtn" class="btn neutral small" title="Sign Out">
+        Sign Out
+      </button>
+    </div>
+  </header>
+
+  <div class="layout">    
+    <aside class="sidebar" id="sidebar">
+      <nav class="sidebar-nav">
+        <ul class="nav-list">
+          <li>
+            <a href="dashboard.html" class="nav-link">
+              <span>📊</span>
+              <span>Dashboard</span>
+            </a>
+          </li>
+          <li class="role-restricted" data-role="employee,admin">
+            <a href="submit-invoice.html" class="nav-link">
+              <span>📝</span>
+              <span>Submit Invoice</span>
+            </a>
+          </li>
+          <li class="role-restricted" data-role="manager,finance,admin">
+            <a href="approvals.html" class="nav-link active">
+              <span>✅</span>
+              <span>Approvals</span>
+            </a>
+          </li>
+          <li class="role-restricted" data-role="admin,finance">
+            <a href="reports.html" class="nav-link">
+              <span>📈</span>
+              <span>Reports</span>
+            </a>
+          </li>
+          <li class="role-restricted" data-role="admin">
+            <a href="audit-logs.html" class="nav-link">
+              <span>🛡️</span>
+              <span>Audit Logs</span>
+            </a>
+          </li>
+        </ul>
+      </nav>
+      <div class="sidebar-footer">
+        <p style="font-size: 0.7rem; color: var(--muted); margin: 0;">v1.0.0 • Made with ❤️ by SN</p>
+      </div>
+    </aside>
+
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <main class="content" id="mainContent">
+      <div class="content-width">
+        <header class="page-header">
+          <div>
+            <h1 class="page-title">Approval Queue</h1>
+            <p class="page-breadcrumbs">Manage pending invoices</p>
+          </div>
+        </header>
+
+        <section class="card" style="margin-bottom: 1.5rem;">
+          <form id="filterForm" class="kpi-row" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 0;">
+            <div class="form-group" style="margin-bottom:0;">
+              <label for="filterStatus" style="font-size: 0.85rem; font-weight: 500;">Status</label>
+              <select id="filterStatus">
+                <option value="pending" selected>Pending</option>
+                <option value="approved">Approved</option>
+                <option value="rejected">Rejected</option>
+                <option value="all">All Statuses</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin-bottom:0;">
+              <label for="filterDate" style="font-size: 0.85rem; font-weight: 500;">From Date</label>
+              <input type="date" id="filterDate" />
+            </div>
+            <div class="form-group" style="margin-bottom:0; display: flex; align-items: flex-end;">
+              <button type="submit" id="applyFilters" class="btn primary" style="width: 100%;">
+                Apply Filters
+              </button>
+            </div>
+          </form>
+        </section>
+
+        <section class="panel">
+          <div class="panel-header">
+            <h2 class="panel-title">Invoices</h2>
+            <button id="refreshBtn" class="icon-btn small" title="Refresh">↻</button>
+          </div>
+
+          <div class="table-wrap">
+            <table class="table" id="approvalsTable">
+              <thead>
+                <tr>
+                  <th>Invoice ID</th>
+                  <th>Vendor</th>
+                  <th>Amount</th>
+                  <th>Date</th>
+                  <th>Status</th>
+                  <th style="text-align: right;">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="approvalsTableBody">
+                </tbody>
+            </table>
+
+            <div id="tableLoading" class="text-center muted" style="padding: 2rem;">Loading invoices...</div>
+            <div id="tableEmpty" class="empty-state hidden">No invoices found.</div>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <div id="rejectModal" class="modal hidden" aria-hidden="true">
+    <div class="modal-content">
+      <header class="modal-header">
+        <h3>Reject Invoice</h3>
+      </header>
+      <div class="modal-body">
+        <p>Rejecting Invoice <strong id="rejectInvoiceId">...</strong></p>
+        <div class="form-group" style="margin-top: 1rem;">
+          <label for="rejectReason" style="font-size: 0.9rem;">Reason for Rejection *</label>
+          <textarea id="rejectReason" rows="3" placeholder="e.g. Incorrect amount..."></textarea>
+          <p id="rejectError" class="error hidden" style="margin-top: 0.5rem;">Reason is required.</p>
+        </div>
+      </div>
+      <footer class="modal-footer">
+        <button id="cancelRejectBtn" class="btn neutral">Cancel</button>
+        <button id="confirmRejectBtn" class="btn danger">Reject Invoice</button>
+      </footer>
+    </div>
+  </div>
+
+  <script>window.API_BASE_URL = "http://localhost:5000";</script>
+  <script src="../js/theme.js"></script>
+  <script src="../js/api.js"></script>
+  <script src="../js/approvals.js"></script>
+</body>
+</html>
