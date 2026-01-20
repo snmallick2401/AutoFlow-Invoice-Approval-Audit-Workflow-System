@@ -1,3 +1,5 @@
+// backend/public/submit-invoice.html
+
 <!doctype html>
 <html lang="en">
 <head>
@@ -5,10 +7,53 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>AutoFlow — Submit Invoice</title>
 
-  <link rel="stylesheet" href="../css/base.css" />
-  <link rel="stylesheet" href="../css/layout.css" />
-  <link rel="stylesheet" href="../css/components.css" />
-  <link rel="stylesheet" href="../css/theme.css" />
+  <link rel="stylesheet" href="css/base.css" />
+  <link rel="stylesheet" href="css/layout.css" />
+  <link rel="stylesheet" href="css/components.css" />
+  <link rel="stylesheet" href="css/theme.css" />
+
+  <style>
+    .footer-heart {
+      text-align: center;
+      font-family: inherit;
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.3rem;
+    }
+
+    .footer-heart .emoji {
+      vertical-align: middle;
+      display: inline-block;
+    }
+
+    .footer-heart a {
+      color: var(--text);
+      font-weight: 600;
+      text-decoration: none;
+      border-bottom: 1px solid var(--muted);
+      padding-bottom: 0.1em;
+      transition: color 0.2s ease, border-color 0.2s ease;
+    }
+
+    .footer-heart a:hover {
+      color: var(--primary);
+      border-bottom-color: transparent;
+      background-image: url("data:image/svg+xml;charset=utf8,%3Csvg id='squiggle-link' xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' xmlns:ev='http://www.w3.org/2001/xml-events' viewBox='0 0 20 4'%3E%3Cstyle type='text/css'%3E.squiggle{animation:shift .3s linear infinite;}@keyframes shift {from {transform:translateX(0);}to {transform:translateX(-20px);}}%3C/style%3E%3Cpath fill='none' stroke='%23ef4444' stroke-width='2' class='squiggle' d='M0,3.5 c 5,0,5,-3,10,-3 s 5,3,10,3 c 5,0,5,-3,10,-3 s 5,3,10,3'/%3E%3C/svg%3E");
+      background-position: bottom;
+      background-repeat: repeat-x;
+      background-size: 20%;
+      padding-bottom: 0.3em;
+    }
+
+    /* Dark Mode link support */
+    html.dark .footer-heart a {
+      border-bottom-color: rgba(255, 255, 255, 0.3);
+    }
+  </style>
 
   <script>
     (function () {
@@ -93,7 +138,7 @@
         </ul>
       </nav>
       <div class="sidebar-footer">
-        <p style="font-size: 0.7rem; color: var(--muted); margin: 0;">v1.0.0 • Made with ❤️ by SN</p>
+        <p style="font-size: 0.7rem; color: var(--muted); margin: 0;">v1.0.0 • AutoFlow</p>
       </div>
     </aside>
 
@@ -118,33 +163,33 @@
             <form id="invoiceForm" novalidate enctype="multipart/form-data">
               
               <div class="form-group">
-                <label for="vendorName" style="font-size: 0.9rem; font-weight: 500;">Vendor Name</label>
+                <label for="vendorName" style="font-size: 0.9rem; font-weight: 600; margin-bottom: 0.5rem; display: block;">Vendor Name</label>
                 <input type="text" id="vendorName" name="vendorName" placeholder="e.g. Acme Corp" required />
               </div>
 
-              <div class="form-row" style="gap: 1rem;">
+              <div class="form-row" style="gap: 1rem; display: flex;">
                 <div style="flex: 1;">
-                  <label for="amount" style="font-size: 0.9rem; font-weight: 500;">Amount (INR)</label>
+                  <label for="amount" style="font-size: 0.9rem; font-weight: 600; margin-bottom: 0.5rem; display: block;">Amount (INR)</label>
                   <input type="number" id="amount" name="amount" placeholder="0.00" min="1" step="0.01" required />
                 </div>
                 <div style="flex: 1;">
-                  <label for="invoiceDate" style="font-size: 0.9rem; font-weight: 500;">Invoice Date</label>
+                  <label for="invoiceDate" style="font-size: 0.9rem; font-weight: 600; margin-bottom: 0.5rem; display: block;">Invoice Date</label>
                   <input type="date" id="invoiceDate" name="invoiceDate" required />
                 </div>
               </div>
 
               <div class="form-group">
-                <label for="description" style="font-size: 0.9rem; font-weight: 500;">Description</label>
+                <label for="description" style="font-size: 0.9rem; font-weight: 600; margin-bottom: 0.5rem; display: block;">Description</label>
                 <textarea id="description" name="description" rows="3" placeholder="Brief details about services or goods..."></textarea>
               </div>
 
               <div class="form-group">
-                <label for="file" style="font-size: 0.9rem; font-weight: 500;">Attachment (PDF/Image)</label>
-                <input type="file" id="file" name="file" accept=".pdf,.png,.jpg,.jpeg" required />
-                <small class="muted">Max size 5MB.</small>
+                <label for="file" style="font-size: 0.9rem; font-weight: 600; margin-bottom: 0.5rem; display: block;">Attachment (PDF only)</label>
+                <input type="file" id="file" name="file" accept=".pdf" required style="padding: 0.5rem; background: transparent; border: none;" />
+                <small class="muted" style="display: block; margin-top: 0.25rem;">Max size 5MB.</small>
               </div>
 
-              <div style="margin-top: 2rem; text-align: right;">
+              <div style="margin-top: 2rem; text-align: right; display: flex; justify-content: flex-end; gap: 1rem;">
                 <button type="button" class="btn neutral" onclick="window.location.href='dashboard.html'">Cancel</button>
                 <button type="submit" id="submitBtn" class="btn primary">Submit Invoice</button>
               </div>
@@ -154,13 +199,24 @@
         </div>
 
       </div>
+
+      <footer class="site-footer">
+        <p class="footer-heart">
+          Made with 
+          <g-emoji class="g-emoji" alias="heart" fallback-src="https://github.githubassets.com/images/icons/emoji/unicode/2764.png">
+            <img class="emoji" alt="heart" height="20" width="20" src="https://github.githubassets.com/images/icons/emoji/unicode/2764.png">
+          </g-emoji> 
+          by 
+          <a href="https://www.linkedin.com/in/snmallick2401/" target="_blank" rel="noopener noreferrer">S N Mallick</a>
+        </p>
+      </footer>
     </main>
   </div>
 
-  <script>window.API_BASE_URL = "http://localhost:5000";</script>
-  <script src="../js/theme.js"></script>
-  <script src="../js/api.js"></script>
-  <script src="../js/submit-invoice.js"></script>
+  <script>window.API_BASE_URL = "";</script>
+  <script src="js/theme.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/submit-invoice.js"></script>
 
 </body>
 </html>
