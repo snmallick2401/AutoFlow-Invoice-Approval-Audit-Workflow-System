@@ -1,200 +1,199 @@
-// backend/public/js/audit-logs.js
+// backend/public/js/auth.js
 "use strict";
 
 (() => {
+  // --- Configuration ---
   const CONFIG = {
+    TOKEN_KEY: "autoflow_token",
     USER_KEY: "autoflow_user",
+    THEME_KEY: "theme",
+    DASHBOARD_URL: "dashboard.html",
   };
 
+  // --- State ---
   const state = {
-    page: 1,
-    limit: 15,
-    totalPages: 1,
-    logs: [] // Store current page logs here for safe access
+    isSubmitting: false,
   };
 
   document.addEventListener("DOMContentLoaded", init);
 
   function init() {
-    loadUser();
-    attachListeners();
-    fetchLogs();
+    const ui = cacheDOM();
+    if (!ui.form) return; // Exit if not on login page
+
+    bindEvents(ui);
+    checkRedirect(); // Optional: Check if already logged in
   }
 
-  // --- UI & Listeners ---
-
-  function loadUser() {
-    try {
-      const user = JSON.parse(sessionStorage.getItem(CONFIG.USER_KEY) || localStorage.getItem(CONFIG.USER_KEY));
-      if (user) {
-        document.getElementById("userName").textContent = user.name || "Admin";
-        const badge = document.getElementById("userRole");
-        badge.textContent = (user.role || "ADMIN").toUpperCase();
-        badge.className = `role-badge ${user.role}`;
-      }
-    } catch (e) {}
+  // --- DOM Caching ---
+  function cacheDOM() {
+    return {
+      form: document.getElementById("loginForm"),
+      email: document.getElementById("email"),
+      password: document.getElementById("password"),
+      remember: document.getElementById("remember"),
+      btn: document.getElementById("loginBtn"),
+      btnText: document.getElementById("loginBtnText"),
+      spinner: document.getElementById("loginSpinner"),
+      error: document.getElementById("loginError"),
+      togglePass: document.getElementById("togglePassword"),
+      themeToggle: document.getElementById("themeToggle"),
+    };
   }
 
-  function attachListeners() {
-    // Sidebar Toggle
-    document.getElementById("sidebarToggle")?.addEventListener("click", (e) => {
-      e.preventDefault();
-      const sb = document.getElementById("sidebar");
-      if (window.innerWidth < 768) sb.classList.toggle("open");
-      else sb.classList.toggle("collapsed");
-    });
+  // --- Event Binding ---
+  function bindEvents(ui) {
+    // Login Submission
+    ui.form.addEventListener("submit", (e) => handleLogin(e, ui));
 
-    document.getElementById("sidebarOverlay")?.addEventListener("click", () => {
-      document.getElementById("sidebar").classList.remove("open");
-    });
+    // Password Visibility Toggle
+    if (ui.togglePass) {
+      ui.togglePass.addEventListener("click", (e) => {
+        e.preventDefault();
+        togglePasswordVisibility(ui);
+      });
+    }
 
-    // Auth
-    document.getElementById("logoutBtn")?.addEventListener("click", () => {
-      sessionStorage.clear();
-      localStorage.clear();
-      // Redirect to index.html (Deployment standard)
-      window.location.href = "index.html"; 
-    });
-
-    // Filters
-    document.getElementById("auditFilterForm").addEventListener("submit", (e) => {
-      e.preventDefault();
-      state.page = 1; // Reset to page 1 on filter
-      fetchLogs();
-    });
-
-    // Pagination
-    document.getElementById("prevPage").addEventListener("click", () => changePage(-1));
-    document.getElementById("nextPage").addEventListener("click", () => changePage(1));
-
-    // Modal Close
-    document.getElementById("closeMetaBtn").addEventListener("click", () => {
-      document.getElementById("metaModal").classList.add("hidden");
-    });
-
-    // Event Delegation for "View Details" buttons
-    document.getElementById("auditTableBody").addEventListener("click", (e) => {
-      if (e.target.matches(".view-meta-btn")) {
-        const index = e.target.getAttribute("data-index");
-        const logData = state.logs[index];
-        if (logData && logData.metadata) {
-          openMetaModal(logData.metadata);
-        }
-      }
-    });
-  }
-
-  function changePage(delta) {
-    const newPage = state.page + delta;
-    if (newPage > 0 && newPage <= state.totalPages) {
-      state.page = newPage;
-      fetchLogs();
+    // Theme Toggle (Specific to Login Page)
+    if (ui.themeToggle) {
+      ui.themeToggle.addEventListener("click", (e) => {
+        e.preventDefault();
+        const isDark = document.documentElement.classList.toggle("dark");
+        localStorage.setItem(CONFIG.THEME_KEY, isDark ? "dark" : "light");
+      });
     }
   }
 
-  // --- Data Fetching ---
+  // --- Core Handlers ---
 
-  async function fetchLogs() {
-    const action = document.getElementById("filterAction").value;
-    const date = document.getElementById("filterDate").value;
-    
-    const loading = document.getElementById("tableLoading");
-    const empty = document.getElementById("tableEmpty");
-    const tbody = document.getElementById("auditTableBody");
+  async function handleLogin(e, ui) {
+    e.preventDefault();
+    if (state.isSubmitting) return; // Prevent double-submit
 
-    // UI Loading State
-    tbody.innerHTML = "";
-    loading.classList.remove("hidden");
-    empty.classList.add("hidden");
-    updatePaginationUI();
+    clearError(ui);
+
+    const email = ui.email.value.trim();
+    const password = ui.password.value;
+
+    // 1. Validation
+    if (!validateEmail(email)) {
+      showError(ui, "Please enter a valid email address.");
+      ui.email.focus();
+      return;
+    }
+    if (!password) {
+      showError(ui, "Please enter your password.");
+      ui.password.focus();
+      return;
+    }
+
+    // 2. Submit
+    setLoading(ui, true);
 
     try {
-      // Build Query
-      const params = new URLSearchParams({
-        page: state.page,
-        limit: state.limit
-      });
-      if (action) params.append("action", action);
-      if (date) params.append("date", date);
-
-      const res = await window.apiFetch(`/api/audit?${params.toString()}`);
-      
-      loading.classList.add("hidden");
-      
-      if (!res.logs || res.logs.length === 0) {
-        state.logs = [];
-        empty.classList.remove("hidden");
-        state.totalPages = 1;
-        updatePaginationUI();
-        return;
+      // Ensure API client is loaded
+      if (typeof window.apiFetch !== "function") {
+        throw new Error("System error: API client not initialized.");
       }
 
-      state.logs = res.logs; // Store data for modal usage
-      state.totalPages = res.pages;
-      renderTable(res.logs);
-      updatePaginationUI();
+      const response = await window.apiFetch("/api/auth/login", {
+        method: "POST",
+        body: { email, password },
+      });
+
+      if (!response || !response.token) {
+        throw new Error("Invalid response from server.");
+      }
+
+      processLoginSuccess(response, ui.remember.checked);
 
     } catch (err) {
-      console.error("Audit fetch failed:", err);
-      loading.textContent = "Failed to load logs. You might not have permission.";
+      console.error("Login Error:", err);
+      
+      // User-friendly error mapping
+      let msg = "Login failed. Please check your credentials.";
+      if (err.status === 401) msg = "Invalid email or password.";
+      else if (err.message) msg = err.message;
+
+      showError(ui, msg);
+    } finally {
+      setLoading(ui, false);
     }
   }
 
-  function renderTable(logs) {
-    const tbody = document.getElementById("auditTableBody");
-    const frag = document.createDocumentFragment();
+  function processLoginSuccess(data, rememberMe) {
+    const { token, user } = data;
 
-    logs.forEach((log, index) => {
-      const tr = document.createElement("tr");
-      
-      const actor = log.userId 
-        ? `<span style="font-weight:500">${escapeHtml(log.userId.name || log.userId.email)}</span>` 
-        : `<span class="muted">System / Unknown</span>`;
+    // 1. Clean Slate: Clear ALL storage to prevent conflicts
+    localStorage.removeItem(CONFIG.TOKEN_KEY);
+    localStorage.removeItem(CONFIG.USER_KEY);
+    sessionStorage.removeItem(CONFIG.TOKEN_KEY);
+    sessionStorage.removeItem(CONFIG.USER_KEY);
 
-      const resource = log.resource 
-        ? `<small class="muted">${log.resource.type}: ${log.resource.id}</small>` 
-        : `<small class="muted">-</small>`;
+    // 2. Store New Session
+    const storage = rememberMe ? localStorage : sessionStorage;
+    storage.setItem(CONFIG.TOKEN_KEY, token);
+    storage.setItem(CONFIG.USER_KEY, JSON.stringify(user));
 
-      // Improved Button: Uses data-index instead of passing raw JSON string
-      const metaBtn = `<button class="btn neutral small view-meta-btn" data-index="${index}">View</button>`;
-
-      tr.innerHTML = `
-        <td style="white-space:nowrap; font-size:0.8rem;">
-          ${new Date(log.timestamp).toLocaleString()}
-        </td>
-        <td><span class="status" style="background:var(--bg); border:1px solid var(--border);">${log.action}</span></td>
-        <td>${actor}</td>
-        <td>${log.ip || "—"}</td>
-        <td>${resource}</td>
-        <td style="text-align:right;">${log.metadata ? metaBtn : '<span class="muted">—</span>'}</td>
-      `;
-      frag.appendChild(tr);
-    });
-
-    tbody.appendChild(frag);
+    // 3. Redirect
+    window.location.href = CONFIG.DASHBOARD_URL;
   }
 
-  function updatePaginationUI() {
-    const prev = document.getElementById("prevPage");
-    const next = document.getElementById("nextPage");
+  // --- Helper Functions ---
+
+  function togglePasswordVisibility(ui) {
+    const isPassword = ui.password.type === "password";
+    ui.password.type = isPassword ? "text" : "password";
     
-    prev.disabled = state.page <= 1;
-    next.disabled = state.page >= state.totalPages;
-  }
-
-  function openMetaModal(meta) {
-    const modal = document.getElementById("metaModal");
-    const content = document.getElementById("metaContent");
+    // Update ARIA for accessibility
+    ui.togglePass.setAttribute("aria-label", isPassword ? "Hide password" : "Show password");
     
-    content.textContent = JSON.stringify(meta, null, 2);
-    modal.classList.remove("hidden");
-    modal.style.display = "flex";
+    // Optional: If using an icon class toggle
+    // ui.togglePass.classList.toggle("active"); 
   }
 
-  function escapeHtml(str) {
-    return (str || "").replace(/[&<>"']/g, m => ({ 
-      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' 
-    })[m]);
+  function setLoading(ui, isLoading) {
+    state.isSubmitting = isLoading;
+    ui.btn.disabled = isLoading;
+    
+    if (ui.spinner) ui.spinner.hidden = !isLoading;
+    
+    if (ui.btnText) {
+      ui.btnText.textContent = isLoading ? "Signing in..." : "Sign In";
+    }
+  }
+
+  function showError(ui, msg) {
+    if (ui.error) {
+      ui.error.textContent = msg;
+      ui.error.hidden = false;
+      // Optional visual shake
+      ui.error.classList.remove("hidden");
+    } else {
+      alert(msg);
+    }
+  }
+
+  function clearError(ui) {
+    if (ui.error) {
+      ui.error.textContent = "";
+      ui.error.hidden = true;
+    }
+  }
+
+  function validateEmail(email) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  }
+
+  function checkRedirect() {
+    // If user is already logged in, you might want to auto-redirect
+    // Uncomment below if desired:
+    /*
+    const token = localStorage.getItem(CONFIG.TOKEN_KEY) || sessionStorage.getItem(CONFIG.TOKEN_KEY);
+    if (token) {
+      window.location.href = CONFIG.DASHBOARD_URL;
+    }
+    */
   }
 
 })();
