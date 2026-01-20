@@ -1,0 +1,138 @@
+/* frontend/css/theme.css */
+
+/* --- Global Transitions --- */
+/* Smooth state changes for all interactive and structural elements */
+html, body,
+.navbar, .sidebar, .card, .panel, .table,
+input, textarea, select, button, .modal-content {
+  transition:
+    background-color var(--transition-base),
+    color var(--transition-base),
+    border-color var(--transition-base),
+    box-shadow var(--transition-base),
+    backdrop-filter var(--transition-base);
+}
+
+/* --- Surface Coloring (Glassmorphism) --- */
+/* Applies the frosted glass effect to main containers */
+.navbar, .sidebar, .card, .panel, .modal-content {
+  background: var(--card); /* Semi-transparent token from base.css */
+  backdrop-filter: var(--backdrop);
+  -webkit-backdrop-filter: var(--backdrop); /* Safari support */
+  border: 1px solid var(--border);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1); /* Subtle depth */
+}
+
+/* Ensure layout borders are enforced */
+.navbar { border-bottom: 1px solid var(--border); }
+.sidebar { border-right: 1px solid var(--border); }
+
+/* --- Table Theme Overrides --- */
+.table thead th {
+  color: var(--muted);
+  background: transparent;
+  border-bottom: 1px solid var(--border);
+}
+
+.table tbody td {
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+}
+
+.table tbody tr:hover {
+  background-color: rgba(255, 255, 255, 0.03);
+}
+
+/* --- Text Utilities --- */
+.muted, small, .muted small { color: var(--muted); }
+
+/* --- Form Controls --- */
+input, textarea, select {
+  background: rgba(255, 255, 255, 0.03); /* Very subtle tint */
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+
+input::placeholder, textarea::placeholder { 
+  color: var(--muted); 
+  opacity: 0.7; 
+}
+
+input:focus, textarea:focus, select:focus {
+  border-color: var(--primary);
+  background: rgba(255, 255, 255, 0.08); /* Slightly lighter on focus */
+  box-shadow: 0 0 0 1px var(--primary); /* Sharp glow */
+  outline: none;
+}
+
+/* --- Buttons --- */
+.btn.neutral {
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+.btn.neutral:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: var(--text);
+}
+
+.btn.primary {
+  background: var(--primary);
+  color: #fff;
+  border: 1px solid var(--primary);
+}
+
+.btn.primary:hover {
+  background: var(--primary-hover);
+  box-shadow: 0 0 15px var(--primary); /* Neon glow effect */
+  border-color: var(--primary-hover);
+}
+
+.btn:active { transform: translateY(1px) scale(0.995); }
+
+/* --- Status Badges --- */
+/* Borders added for better definition in glass mode */
+.status-pending  { background: var(--status-pending-bg);  color: var(--warning); border: 1px solid rgba(245, 158, 11, 0.2); }
+.status-approved { background: var(--status-approved-bg); color: var(--success); border: 1px solid rgba(22, 163, 74, 0.2); }
+.status-rejected { background: var(--status-rejected-bg); color: var(--danger);  border: 1px solid rgba(220, 38, 38, 0.2); }
+
+/* --- Modals --- */
+.modal-content {
+  /* Inherits glass styles from Surface Coloring section above */
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5); /* Stronger shadow for modal pop */
+}
+
+/* --- Scrollbars (Webkit) --- */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+
+::-webkit-scrollbar-thumb {
+  background: rgba(128, 128, 128, 0.2);
+  border-radius: 999px;
+  border: 2px solid transparent; /* Creates padding effect */
+  background-clip: content-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--muted);
+}
+
+/* Dark Mode Scrollbar Specifics */
+html.dark ::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.15);
+}
+
+html.dark ::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(255, 255, 255, 0.3);
+}
+
+/* --- Accessibility & Motion --- */
+:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; }
+}
+
+#themeToggle { transition: transform 300ms cubic-bezier(0.34, 1.56, 0.64, 1); }
+#themeToggle:active { transform: rotate(25deg) scale(0.9); }
