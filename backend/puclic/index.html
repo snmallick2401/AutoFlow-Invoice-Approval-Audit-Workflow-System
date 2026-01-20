@@ -1,205 +1,394 @@
-<!doctype html>
+// backend/public/index.html
+
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>AutoFlow — Sign In</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AutoFlow - Access Control</title>
+    
+    <script src="js/theme.js"></script>
 
-  <link rel="stylesheet" href="../css/base.css" />
-  <link rel="stylesheet" href="../css/layout.css" />
-  <link rel="stylesheet" href="../css/components.css" />
-  <link rel="stylesheet" href="../css/theme.css" />
+    <style>
+        /* ============================
+           Fonts & Base Variables
+           ============================ */
+        @import url("https://fonts.cdnfonts.com/css/thegoodmonolith");
 
-  <script>
-    (function () {
-      try {
-        const local = localStorage.getItem("theme");
-        const sys = window.matchMedia("(prefers-color-scheme: dark)").matches;
-        if (local === "dark" || (!local && sys)) {
-          document.documentElement.classList.add("dark");
+        :root {
+            --hue: 223;
+            --bg: hsl(223, 10%, 95%);
+            --fg: hsl(223, 10%, 15%);
+            --card-bg: rgba(255, 255, 255, 0.65);
+            --input-bg: rgba(0, 0, 0, 0.05);
+            --input-border: rgba(0, 0, 0, 0.1);
+            --bg-pattern-color: rgba(0, 0, 0, 0.08);
+            --accent: #ef4444; /* Red accent */
+            --transition-medium: 0.4s ease;
         }
-      } catch (e) {}
-    })();
-  </script>
 
-  <style>
-    .auth-page {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-      background: var(--bg);
-      padding: 1rem;
-      position: relative;
-    }
+        html.dark {
+            --bg: #050505;
+            --fg: #ffffff;
+            --card-bg: rgba(20, 20, 20, 0.6);
+            --input-bg: rgba(255, 255, 255, 0.05);
+            --input-border: rgba(255, 255, 255, 0.15);
+            --bg-pattern-color: rgba(255, 255, 255, 0.15);
+        }
 
-    .auth-panel {
-      width: 100%;
-      max-width: 420px;
-      padding: 2.5rem;
-      background: var(--card);
-      border-radius: var(--radius-lg);
-      border: 1px solid var(--border);
-      box-shadow: var(--shadow-md);
-      animation: fadeIn 0.35s ease-out;
-    }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
-    .brand-header {
-      text-align: center;
-      margin-bottom: 2rem;
-    }
+        body {
+            font-family: "TheGoodMonolith", sans-serif;
+            background-color: var(--bg);
+            color: var(--fg);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
 
-    .brand-logo-large {
-      font-size: 3rem;
-      line-height: 1;
-      margin-bottom: 0.5rem;
-    }
+        .bg-svg {
+            position: absolute;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+            opacity: 0.6;
+        }
 
-    .password-wrapper {
-      position: relative;
-    }
+        main {
+            position: relative;
+            z-index: 1;
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+        }
 
-    .password-wrapper input {
-      padding-right: 2.75rem;
-    }
+        /* ============================
+           Theme Toggle
+           ============================ */
+        .theme-floater {
+            position: absolute;
+            top: 1.5rem;
+            right: 1.5rem;
+            z-index: 10;
+        }
 
-    .password-toggle-btn {
-      position: absolute;
-      right: 0.6rem;
-      top: 50%;
-      transform: translateY(-50%);
-      background: none;
-      border: none;
-      color: var(--muted);
-      cursor: pointer;
-      padding: 0.25rem;
-      display: flex;
-      align-items: center;
-      opacity: 0.6;
-      transition: opacity 0.2s, color 0.2s;
-    }
+        .icon-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.5rem;
+            color: var(--fg);
+            transition: transform 0.2s ease;
+        }
+        .icon-btn:hover { transform: scale(1.1); }
 
-    .password-toggle-btn:hover {
-      opacity: 1;
-      color: var(--primary);
-    }
+        /* ============================
+           Form Container
+           ============================ */
+        .form-container {
+            width: 420px;
+            max-width: 100%;
+            background-color: var(--card-bg);
+            border: 1px solid var(--input-border);
+            padding: 2.5rem;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.1);
+        }
 
-    .auth-footer {
-      margin-top: 2rem;
-      text-align: center;
-      border-top: 1px solid var(--border);
-      padding-top: 1rem;
-      font-size: 0.85rem;
-      color: var(--muted);
-    }
+        html.dark .form-container { box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
 
-    .theme-floater {
-      position: absolute;
-      top: 1.25rem;
-      right: 1.25rem;
-    }
+        .header-text {
+            text-align: center;
+            margin-bottom: 2rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            border-bottom: 1px solid var(--accent);
+            padding-bottom: 1rem;
+        }
 
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(8px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-  </style>
+        .header-text h1 { font-size: 1.8rem; margin-bottom: 0.5rem; }
+        .header-text p { font-size: 0.8rem; opacity: 0.7; }
+
+        .view-panel {
+            display: none;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: opacity 0.4s ease, transform 0.4s ease;
+        }
+
+        .view-panel.active {
+            display: flex;
+            flex-direction: column;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .role-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .role-btn {
+            background: var(--input-bg);
+            border: 1px solid var(--input-border);
+            color: var(--fg);
+            padding: 1.5rem 0.5rem;
+            font-family: inherit;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .role-btn span { font-size: 1.5rem; }
+        .role-btn:hover {
+            border-color: var(--accent);
+            background: rgba(128, 128, 128, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .form-group { margin-bottom: 1.5rem; }
+
+        label {
+            font-size: 0.8rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+            display: block;
+            opacity: 0.8;
+        }
+
+        input {
+            width: 100%;
+            padding: 0.8rem 1rem;
+            background-color: var(--input-bg);
+            border: 1px solid var(--input-border);
+            color: var(--fg);
+            font-family: inherit;
+            font-size: 1rem;
+            transition: 0.3s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--accent);
+            background-color: rgba(128,128,128,0.05);
+        }
+
+        .action-btn {
+            width: 100%;
+            padding: 1rem;
+            margin-top: 0.5rem;
+            background-color: var(--accent);
+            color: #fff;
+            border: none;
+            font-family: inherit;
+            font-size: 1rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .action-btn:hover { box-shadow: 0 0 15px var(--accent); }
+
+        .back-link {
+            display: block;
+            text-align: center;
+            margin-top: 1.5rem;
+            color: var(--fg);
+            opacity: 0.6;
+            font-size: 0.8rem;
+            cursor: pointer;
+        }
+
+        .error-msg {
+            color: var(--accent);
+            font-size: 0.8rem;
+            text-align: center;
+            margin-bottom: 1rem;
+            min-height: 1.2em;
+        }
+
+        /* ============================
+           Footer Integration
+           ============================ */
+        .site-footer {
+            padding: 2rem 1rem;
+            z-index: 1;
+            background: transparent;
+        }
+
+        .footer-heart {
+            text-align: center;
+            font-size: 0.85rem;
+            color: var(--fg);
+            opacity: 0.8;
+        }
+
+        .footer-heart a {
+            border-bottom: 1px solid #453886;
+            color: #453886;
+            padding-bottom: .25em;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        html.dark .footer-heart a { color: #818cf8; border-color: #818cf8; }
+
+        .footer-heart a:hover {
+            color: #2196f3;
+            background-image: url("data:image/svg+xml;charset=utf8,%3Csvg id='squiggle-link' xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' xmlns:ev='http://www.w3.org/2001/xml-events' viewBox='0 0 20 4'%3E%3Cstyle type='text/css'%3E.squiggle{animation:shift .3s linear infinite;}@keyframes shift {from {transform:translateX(0);}to {transform:translateX(-20px);}}%3C/style%3E%3Cpath fill='none' stroke='%23453886' stroke-width='2' class='squiggle' d='M0,3.5 c 5,0,5,-3,10,-3 s 5,3,10,3 c 5,0,5,-3,10,-3 s 5,3,10,3'/%3E%3C/svg%3E");
+            background-position: bottom;
+            background-repeat: repeat-x;
+            background-size: 20%;
+            border-bottom: 0;
+            padding-bottom: .3em;
+        }
+
+        .emoji { vertical-align: middle; }
+    </style>
 </head>
-
-<body class="auth-page">
-
-  <div class="theme-floater">
-    <button id="themeToggle" class="icon-btn" aria-label="Toggle theme" title="Toggle dark mode">
-      🌙
-    </button>
-  </div>
-
-  <main class="auth-panel" role="main" aria-labelledby="loginTitle">
-    <header class="brand-header">
-      <div class="brand-logo-large">🔁</div>
-      <h1 id="loginTitle" class="brand-name" style="font-size:1.5rem;">AutoFlow</h1>
-      <p class="brand-sub">Invoice & Approval Workflow</p>
-    </header>
-
-    <div
-      id="loginError"
-      class="status-rejected"
-      hidden
-      style="margin-bottom:1.5rem; text-align:center; display:none;" 
-      role="alert"
-    ></div>
-
-    <form id="loginForm" autocomplete="on" novalidate>
-      <div class="form-group">
-        <label for="email" style="font-size:0.9rem; font-weight:500;">Email address</label>
-        <input
-          id="email"
-          name="email"
-          type="email"
-          required
-          autocomplete="email"
-          placeholder="name@company.com"
-        />
-      </div>
-
-      <div class="form-group">
-        <div style="display:flex; justify-content:space-between; margin-bottom:0.4rem;">
-          <label for="password" style="font-size:0.9rem; font-weight:500;">Password</label>
-          <span class="muted" style="font-size:0.8rem;">Forgot?</span>
-        </div>
-
-        <div class="password-wrapper">
-          <input
-            id="password"
-            name="password"
-            type="password"
-            required
-            autocomplete="current-password"
-            placeholder="••••••••"
-          />
-          <button
-            type="button"
-            id="togglePassword"
-            class="password-toggle-btn"
-            aria-label="Show password"
-          >
-            👁
-          </button>
-        </div>
-      </div>
-
-      <div class="form-group" style="margin:1rem 0 1.5rem;">
-        <label style="display:flex; justify-content:space-between; align-items:center;">
-          <span style="font-size:0.9rem;">Keep me signed in</span>
-          <input id="remember" type="checkbox" />
-        </label>
-      </div>
-
-      <button
-        id="loginBtn"
-        type="submit"
-        class="btn primary"
-        style="width:100%; padding:0.75rem;"
-      >
-        <span id="loginBtnText">Sign In</span>
-        <span id="loginSpinner" class="spinner" hidden aria-hidden="true"></span>
-      </button>
-    </form>
-
-    <footer class="auth-footer">
-      Made with ❤️ by SN
-    </footer>
-  </main>
-
-  <noscript>
-    <div style="position:fixed; bottom:0; inset-inline:0; background:var(--danger); color:#fff; text-align:center; padding:1rem;">
-      JavaScript is required to sign in.
+<body>
+    
+    <div class="theme-floater">
+        <button id="themeToggle" class="icon-btn" title="Toggle Theme">🌙</button>
     </div>
-  </noscript>
 
-  <script>window.API_BASE_URL = "http://localhost:5000";</script>
-  <script src="../js/theme.js"></script>
-  <script src="../js/api.js"></script>
-  <script src="../js/auth.js"></script>
+    <svg class="bg-svg" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+            <pattern id="dottedGrid" width="30" height="30" patternUnits="userSpaceOnUse">
+                <circle cx="2" cy="2" r="1" fill="var(--bg-pattern-color)" />
+            </pattern>
+        </defs>
+        <rect width="100%" height="100%" fill="url(#dottedGrid)" />
+    </svg>
+
+    <main>
+        <div class="form-container">
+            <div class="header-text">
+                <h1>AutoFlow</h1>
+                <p>System Access Control</p>
+            </div>
+
+            <div id="view-roles" class="view-panel active">
+                <div class="form-group" style="text-align: center;">
+                    <label>Identify Access Level</label>
+                </div>
+                <div class="role-grid">
+                    <button class="role-btn" data-role="admin"><span>🛡️</span> Admin</button>
+                    <button class="role-btn" data-role="finance"><span>💰</span> Finance</button>
+                    <button class="role-btn" data-role="manager"><span>👔</span> Manager</button>
+                    <button class="role-btn" data-role="employee"><span>👤</span> Employee</button>
+                </div>
+            </div>
+
+            <form id="view-login" class="view-panel">
+                <div style="text-align: center; margin-bottom: 1.5rem; font-size: 0.9rem; color: var(--accent); text-transform: uppercase;">
+                    Identified as: <span id="role-target">...</span>
+                </div>
+
+                <div id="loginError" class="error-msg"></div>
+
+                <div class="form-group">
+                    <label for="login-email">Email Address</label>
+                    <input type="email" id="login-email" required placeholder="user@autoflow.com">
+                </div>
+                
+                <div class="form-group">
+                    <label for="login-password">Password</label>
+                    <input type="password" id="login-password" required placeholder="••••••••">
+                </div>
+                
+                <button type="submit" class="action-btn" id="loginBtn">Initialize</button>
+                <a class="back-link" id="back-btn">← Select different role</a>
+            </form>
+        </div>
+    </main>
+
+    <footer class="site-footer">
+        <p class="footer-heart">
+          Made with 
+          <g-emoji class="g-emoji" alias="heart" fallback-src="https://github.githubassets.com/images/icons/emoji/unicode/2764.png">
+            <img class="emoji" alt="heart" height="20" width="20" src="https://github.githubassets.com/images/icons/emoji/unicode/2764.png">
+          </g-emoji> 
+          by <a href="https://www.linkedin.com/in/snmallick2401/" target="_blank" rel="noopener noreferrer">S N Mallick</a>
+        </p>
+    </footer>
+
+    <script>window.API_BASE_URL = "";</script>
+    <script src="js/api.js"></script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const CONFIG = { TOKEN_KEY: "autoflow_token", USER_KEY: "autoflow_user" };
+            const viewRoles = document.getElementById('view-roles');
+            const viewLogin = document.getElementById('view-login');
+            const roleButtons = document.querySelectorAll('.role-btn');
+            const roleTargetSpan = document.getElementById('role-target');
+            const backBtn = document.getElementById('back-btn');
+            const errorMsg = document.getElementById('loginError');
+            const loginBtn = document.getElementById('loginBtn');
+
+            roleButtons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const role = btn.getAttribute('data-role');
+                    roleTargetSpan.textContent = role;
+                    viewRoles.classList.remove('active');
+                    setTimeout(() => {
+                        viewLogin.classList.add('active');
+                        document.getElementById('login-email').focus();
+                    }, 200);
+                });
+            });
+
+            backBtn.addEventListener('click', () => {
+                viewLogin.classList.remove('active');
+                setTimeout(() => viewRoles.classList.add('active'), 200);
+            });
+
+            viewLogin.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const email = document.getElementById('login-email').value;
+                const password = document.getElementById('login-password').value;
+
+                loginBtn.textContent = "Authenticating...";
+                loginBtn.disabled = true;
+                errorMsg.textContent = "";
+
+                try {
+                    const data = await window.apiFetch("/api/auth/login", {
+                        method: "POST",
+                        body: { email, password }
+                    });
+
+                    if (data && data.token) {
+                        localStorage.setItem(CONFIG.TOKEN_KEY, data.token);
+                        localStorage.setItem(CONFIG.USER_KEY, JSON.stringify(data.user));
+                        sessionStorage.setItem(CONFIG.TOKEN_KEY, data.token);
+                        sessionStorage.setItem(CONFIG.USER_KEY, JSON.stringify(data.user));
+                        window.location.href = "dashboard.html";
+                    }
+                } catch (err) {
+                    errorMsg.textContent = err.message || "Access denied.";
+                    loginBtn.textContent = "Initialize";
+                    loginBtn.disabled = false;
+                }
+            });
+        });
+    </script>
 </body>
 </html>
