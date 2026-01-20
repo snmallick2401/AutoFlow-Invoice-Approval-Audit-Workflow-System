@@ -1,4 +1,4 @@
-// frontend/js/approvals.js
+// backend/public/js/approvals.js
 "use strict";
 
 (() => {
@@ -30,8 +30,11 @@
   function cacheDOM() {
     const get = (id) => document.getElementById(id);
     state.ui = {
+      // User Info
       userName: get("userName"),
       userRole: get("userRole"),
+      
+      // Sidebar
       sidebar: get("sidebar"),
       sidebarToggle: get("sidebarToggle"),
       sidebarOverlay: get("sidebarOverlay"),
@@ -61,20 +64,30 @@
   function attachEventListeners() {
     const ui = state.ui;
 
-    // Navigation
+    // --- Sidebar & Navigation ---
     if (ui.sidebarToggle) {
-      ui.sidebarToggle.addEventListener("click", () => {
+      ui.sidebarToggle.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        // Toggle based on screen size logic
         const isMobile = window.innerWidth < 768;
-        if (isMobile) ui.sidebar.classList.toggle("open");
-        else ui.sidebar.classList.toggle("collapsed");
+        if (isMobile) {
+          ui.sidebar.classList.toggle("open");
+        } else {
+          ui.sidebar.classList.toggle("collapsed");
+        }
       });
     }
+    
     if (ui.sidebarOverlay) {
-      ui.sidebarOverlay.addEventListener("click", () => ui.sidebar.classList.remove("open"));
+      ui.sidebarOverlay.addEventListener("click", () => {
+        if (ui.sidebar) ui.sidebar.classList.remove("open");
+      });
     }
+
     if (ui.logoutBtn) ui.logoutBtn.addEventListener("click", logout);
 
-    // Filters
+    // --- Filters & Refresh ---
     if (ui.filterForm) {
       ui.filterForm.addEventListener("submit", (e) => {
         e.preventDefault();
@@ -83,7 +96,7 @@
     }
     if (ui.refreshBtn) ui.refreshBtn.addEventListener("click", fetchInvoices);
 
-    // Modal
+    // --- Modal Actions ---
     if (ui.cancelRejectBtn) ui.cancelRejectBtn.addEventListener("click", closeRejectModal);
     if (ui.confirmRejectBtn) ui.confirmRejectBtn.addEventListener("click", handleRejectConfirm);
   }
@@ -95,18 +108,27 @@
         state.currentUser = JSON.parse(stored);
       } else {
         const data = await window.apiFetch("/api/auth/me");
-        state.currentUser = data;
+        // Safe check if data is wrapped in { user: ... } or returned directly
+        state.currentUser = data.user || data; 
       }
       
-      if (state.currentUser && state.ui.userName) {
-        state.ui.userName.textContent = state.currentUser.name || state.currentUser.email;
-        state.ui.userRole.textContent = (state.currentUser.role || "user").toUpperCase();
-        state.ui.userRole.className = `role-badge ${state.currentUser.role}`;
-      }
+      updateUserUI();
     } catch (e) {
       console.warn("User load failed", e);
     }
   }
+
+  function updateUserUI() {
+    if (state.currentUser && state.ui.userName) {
+      state.ui.userName.textContent = state.currentUser.name || state.currentUser.email;
+      if (state.ui.userRole) {
+        state.ui.userRole.textContent = (state.currentUser.role || "user").toUpperCase();
+        state.ui.userRole.className = `role-badge ${state.currentUser.role}`;
+      }
+    }
+  }
+
+  // --- Core Data Logic ---
 
   async function fetchInvoices() {
     const ui = state.ui;
@@ -119,26 +141,26 @@
       const status = ui.filterStatus ? ui.filterStatus.value : "pending";
       const date = ui.filterDate ? ui.filterDate.value : "";
       
-      // Construct endpoint based on filter state
-      // Default to pending workflow, switch to general search if status is not pending
-      let endpoint = "/api/invoice/pending";
+      // Build Query Parameters
       const params = new URLSearchParams();
-      
-      if (status !== "pending") {
-         // Fallback logic if backend supports history lookup
-         // endpoint = "/api/invoice/all"; 
+      if (status && status !== 'all') {
+        params.append("status", status);
+      }
+      if (date) {
+        params.append("startDate", date);
+        // Note: Backend 'getInvoices' uses startDate to filter >= that date
       }
 
-      if (date) params.append("date", date);
-      
-      const url = `${endpoint}?${params.toString()}`;
-      const data = await window.apiFetch(url);
+      // Endpoint matches: GET /api/invoice?status=pending
+      const endpoint = `/api/invoice?${params.toString()}`;
+      const data = await window.apiFetch(endpoint);
 
-      // Backend returns { invoices: [...] }
+      // Render
       renderTable(data.invoices || []);
+
     } catch (err) {
       console.error("Fetch error:", err);
-      ui.tableLoading.textContent = "Error loading data.";
+      ui.tableLoading.textContent = "Failed to load invoices. " + (err.message || "");
     }
   }
 
@@ -152,28 +174,55 @@
     }
 
     const fragment = document.createDocumentFragment();
+    const baseUrl = window.API_BASE_URL || "";
 
     invoices.forEach(inv => {
       const tr = document.createElement("tr");
       const status = (inv.status || "pending").toLowerCase();
-      const idDisplay = inv.invoiceId || inv._id;
+      // Use custom Invoice ID if available, otherwise DB ID
+      const displayId = inv.invoiceId || inv._id; 
       
-      let actionsHtml = `<span class="muted">-</span>`;
+      // Dynamic Actions Column
+      let actionsHtml = "";
       
       if (status === "pending") {
         actionsHtml = `
-          <button class="icon-btn small" title="Approve" style="color:var(--success)" onclick="window.handleApprove('${inv._id}')">✔</button>
-          <button class="icon-btn small" title="Reject" style="color:var(--danger)" onclick="window.handleRejectStart('${inv._id}', '${idDisplay}')">✖</button>
+          <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
+            <button class="icon-btn small" title="Approve" style="color:var(--success)" 
+              onclick="window.handleApprove('${inv.invoiceId || inv._id}')">
+              ✔
+            </button>
+            <button class="icon-btn small" title="Reject" style="color:var(--danger)" 
+              onclick="window.handleRejectStart('${inv.invoiceId || inv._id}')">
+              ✖
+            </button>
+            <a href="${baseUrl}/${inv.filePath}" target="_blank" class="icon-btn small" title="View PDF">
+              📄
+            </a>
+          </div>
+        `;
+      } else {
+        actionsHtml = `
+          <div style="text-align: right;">
+            <a href="${baseUrl}/${inv.filePath}" target="_blank" class="icon-btn small" title="View PDF">
+              📄
+            </a>
+          </div>
         `;
       }
 
       tr.innerHTML = `
-        <td><span class="link">${idDisplay}</span></td>
-        <td>${escapeHtml(inv.vendorName || inv.vendor)}</td>
+        <td style="font-weight: 600;">${displayId}</td>
+        <td>
+          <div>${escapeHtml(inv.vendorName)}</div>
+          <div style="font-size: 0.75rem; color: var(--muted);">
+            By: ${inv.submittedBy?.name || 'Unknown'}
+          </div>
+        </td>
         <td>${currencyFormatter.format(inv.amount)}</td>
-        <td>${new Date(inv.invoiceDate || inv.createdAt).toLocaleDateString()}</td>
-        <td><span class="status status-${status}">${status}</span></td>
-        <td style="text-align:right; white-space:nowrap;">${actionsHtml}</td>
+        <td>${new Date(inv.invoiceDate).toLocaleDateString()}</td>
+        <td><span class="status status-${status}">${status.toUpperCase()}</span></td>
+        <td>${actionsHtml}</td>
       `;
       fragment.appendChild(tr);
     });
@@ -181,26 +230,36 @@
     ui.tableBody.appendChild(fragment);
   }
 
-  // --- Window Actions (Exposed for HTML onclick) ---
+  // --- Global Actions (Exposed to Window for HTML OnClick) ---
 
   window.handleApprove = async (id) => {
-    if (!confirm("Approve this invoice?")) return;
+    if (!confirm(`Approve invoice ${id}?`)) return;
+    
     try {
-      // apiFetch handles errors
-      await window.apiFetch(`/api/invoice/approve/${id}`, { method: "PUT" });
-      fetchInvoices();
+      // Calls PUT /api/invoice/:id/status
+      await window.apiFetch(`/api/invoice/${id}/status`, { 
+        method: "PUT",
+        body: { status: "APPROVED" }
+      });
+      
+      alert("Invoice Approved!");
+      fetchInvoices(); // Refresh
     } catch (e) {
-      alert(e.message);
+      alert(e.message || "Approval failed");
     }
   };
 
-  window.handleRejectStart = (dbId, displayId) => {
-    state.pendingRejectId = dbId;
-    state.ui.rejectInvoiceId.textContent = displayId;
-    state.ui.rejectReason.value = "";
-    state.ui.rejectError.classList.add("hidden");
-    state.ui.rejectModal.classList.remove("hidden");
-    state.ui.rejectModal.style.display = "flex";
+  window.handleRejectStart = (id) => {
+    state.pendingRejectId = id;
+    const ui = state.ui;
+    
+    // Reset and show modal
+    ui.rejectInvoiceId.textContent = id;
+    ui.rejectReason.value = "";
+    ui.rejectError.classList.add("hidden");
+    
+    ui.rejectModal.classList.remove("hidden");
+    ui.rejectModal.style.display = "flex";
   };
 
   async function handleRejectConfirm() {
@@ -214,32 +273,41 @@
 
     try {
       ui.confirmRejectBtn.disabled = true;
-      
-      // apiFetch automatically handles JSON content-type and stringify
-      await window.apiFetch(`/api/invoice/reject/${state.pendingRejectId}`, {
+      ui.confirmRejectBtn.textContent = "Processing...";
+
+      await window.apiFetch(`/api/invoice/${state.pendingRejectId}/status`, {
         method: "PUT",
-        body: { comment: reason }
+        body: { 
+          status: "REJECTED",
+          reason: reason 
+        }
       });
 
+      alert("Invoice Rejected.");
       closeRejectModal();
       fetchInvoices();
     } catch (e) {
-      alert(e.message);
+      alert(e.message || "Rejection failed");
     } finally {
       ui.confirmRejectBtn.disabled = false;
+      ui.confirmRejectBtn.textContent = "Reject Invoice";
     }
   }
 
   function closeRejectModal() {
-    state.ui.rejectModal.classList.add("hidden");
-    state.ui.rejectModal.style.display = "none";
+    const modal = state.ui.rejectModal;
+    if (modal) {
+      modal.classList.add("hidden");
+      modal.style.display = "none";
+    }
     state.pendingRejectId = null;
   }
 
   function logout() {
     sessionStorage.clear();
     localStorage.clear();
-    window.location.href = "login.html";
+    // Use index.html for deployment compatibility
+    window.location.href = "index.html";
   }
 
   function escapeHtml(str) {
