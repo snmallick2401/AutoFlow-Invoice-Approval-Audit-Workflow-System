@@ -14,36 +14,41 @@ table { border-collapse: collapse; border-spacing: 0; }
 /* -------------------------
    2. DESIGN TOKENS
 ------------------------- */
-:root {
-  /* Brand */
-  --primary: #4f46e5;
-  --primary-hover: #4338ca;
+/* Critical: Import the font to prevent layout shifts or breaking the look */
+@import url("https://fonts.cdnfonts.com/css/thegoodmonolith");
 
-  /* Status colors */
+:root {
+  /* Brand - Red Accent (Matches Login) */
+  --primary: #ef4444;       
+  --primary-hover: #dc2626;
+
+  /* Status Colors */
   --success: #16a34a;
   --warning: #f59e0b;
   --danger:  #dc2626;
 
-  /* Light palette */
-  --bg-light:     #f8fafc;
-  --card-light:   #ffffff;
-  --text-light:   #0f172a;
-  --muted-light:  #64748b;
-  --border-light: #e5e7eb;
+  /* --- LIGHT THEME (Glassy) --- */
+  --bg-light:     #f4f4f5;
+  --card-light:   rgba(255, 255, 255, 0.65); /* Semi-transparent */
+  --text-light:   #18181b;
+  --muted-light:  #71717a;
+  --border-light: rgba(0, 0, 0, 0.1);
+  --pattern-light: rgba(0, 0, 0, 0.05); /* Dot color */
 
-  /* Dark palette */
-  --bg-dark:      #0b1220;
-  --card-dark:    #111827;
-  --text-dark:    #e5e7eb;
-  --muted-dark:   #9ca3af;
-  --border-dark:  #1f2937;
+  /* --- DARK THEME (Premium Dark) --- */
+  --bg-dark:      #050505;
+  --card-dark:    rgba(20, 20, 20, 0.6);     /* Semi-transparent */
+  --text-dark:    #ffffff;
+  --muted-dark:   #a1a1aa;
+  --border-dark:  rgba(255, 255, 255, 0.15);
+  --pattern-dark: rgba(255, 255, 255, 0.15); /* Dot color */
 
-  /* Status backgrounds */
+  /* Status Backgrounds */
   --status-bg-pending:  rgba(245,158,11,0.12);
   --status-bg-approved: rgba(16,185,129,0.10);
   --status-bg-rejected: rgba(220,38,38,0.10);
 
-  /* Spacing / radii / shadows */
+  /* Spacing / Radii / Shadows */
   --radius-sm: 6px;
   --radius-md: 10px;
   --radius-lg: 14px;
@@ -53,6 +58,9 @@ table { border-collapse: collapse; border-spacing: 0; }
 
   --transition-fast: 150ms ease;
   --transition-base: 250ms ease;
+  
+  /* Glass Effect */
+  --backdrop: blur(10px);
 }
 
 /* -------------------------
@@ -65,33 +73,43 @@ table { border-collapse: collapse; border-spacing: 0; }
   --text:   var(--text-light);
   --muted:  var(--muted-light);
   --border: var(--border-light);
+  --pattern: var(--pattern-light);
 
   --status-pending-bg:  var(--status-bg-pending);
   --status-approved-bg: var(--status-bg-approved);
   --status-rejected-bg: var(--status-bg-rejected);
 }
 
-html.dark {
-  /* Dark Mode Overrides */
+/* Dark Mode Overrides */
+html.dark, :root.dark {
   --bg:     var(--bg-dark);
   --card:   var(--card-dark);
   --text:   var(--text-dark);
   --muted:  var(--muted-dark);
   --border: var(--border-dark);
+  --pattern: var(--pattern-dark);
 
+  /* Remove heavy shadows in dark mode for cleaner look */
   --shadow-sm: none;
   --shadow-md: none;
 }
 
 /* -------------------------
-   4. TYPOGRAPHY
+   4. TYPOGRAPHY & GLOBAL BG
 ------------------------- */
-html { font-size: 16px; -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale; }
+html { font-size: 16px; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+
 body {
-  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-family: "TheGoodMonolith", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   line-height: 1.5;
   background-color: var(--bg);
   color: var(--text);
+  
+  /* DOTTED GRID BACKGROUND */
+  background-image: radial-gradient(var(--pattern) 1px, transparent 1px);
+  background-size: 30px 30px;
+  background-attachment: fixed; /* Keeps dots static on scroll */
+  
   transition: background-color var(--transition-base), color var(--transition-base);
   min-height: 100%;
 }
@@ -107,14 +125,14 @@ small { font-size: 0.85rem; color: var(--muted); }
 /* -------------------------
    5. LINKS
 ------------------------- */
-a { color: var(--primary); text-decoration: none; transition: color var(--transition-fast); }
-a:hover, a:focus { color: var(--primary-hover); outline: none; }
+a { color: var(--text); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color var(--transition-fast), color var(--transition-fast); }
+a:hover, a:focus { color: var(--primary); border-bottom-color: var(--primary); outline: none; }
 a.muted { color: var(--muted); }
 
 /* -------------------------
    6. LAYOUT HELPERS
 ------------------------- */
-.container, .content-width { max-width: 1100px; margin: 0 auto; padding: 1rem; }
+.container, .content-width { max-width: 1200px; margin: 0 auto; padding: 1rem; }
 
 /* -------------------------
    7. FORM CONTROLS
@@ -124,17 +142,18 @@ input, textarea, select {
   padding: 0.6rem 0.75rem;
   border-radius: var(--radius-sm);
   border: 1px solid var(--border);
-  background-color: var(--card);
+  background-color: rgba(255, 255, 255, 0.03); /* Subtle transparency */
   color: var(--text);
   transition: border var(--transition-fast), background var(--transition-fast), color var(--transition-fast);
 }
 
-input::placeholder, textarea::placeholder { color: var(--muted); }
+input::placeholder, textarea::placeholder { color: var(--muted); opacity: 0.7; }
 
 input:focus, textarea:focus, select:focus {
   outline: none;
   border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(79,70,229,0.06);
+  background-color: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 0 0 1px var(--primary);
 }
 
 /* -------------------------
@@ -151,7 +170,8 @@ input:focus, textarea:focus, select:focus {
   background: var(--card);
   color: var(--text);
   border: 1px solid var(--border);
-  transition: background var(--transition-fast), color var(--transition-fast), transform var(--transition-fast);
+  transition: all var(--transition-fast);
+  cursor: pointer;
 }
 
 .btn.primary {
@@ -159,19 +179,27 @@ input:focus, textarea:focus, select:focus {
   color: #fff;
   border-color: var(--primary);
 }
-.btn.primary:hover { background: var(--primary-hover); }
+.btn.primary:hover { 
+  background: var(--primary-hover); 
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.4); /* Red glow effect */
+}
 
-.btn.neutral { background: var(--card); color: var(--text); }
+.btn.neutral { background: transparent; color: var(--text); }
+.btn.neutral:hover { background: rgba(255,255,255,0.05); }
+
 .btn.small { padding: 0.35rem 0.6rem; font-size: 0.9rem; }
-.btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+.btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; filter: grayscale(1); }
 
-.icon-btn { display: inline-grid; place-items: center; padding: 0.4rem; border-radius: 8px; }
+.icon-btn { display: inline-grid; place-items: center; padding: 0.4rem; border-radius: 8px; transition: background 0.2s; cursor: pointer; }
+.icon-btn:hover { background: rgba(255,255,255,0.1); }
 
 /* -------------------------
    9. CARDS / PANELS
 ------------------------- */
 .card, .panel {
   background: var(--card);
+  backdrop-filter: var(--backdrop);
+  -webkit-backdrop-filter: var(--backdrop); /* Safari support */
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-sm);
@@ -186,7 +214,8 @@ input:focus, textarea:focus, select:focus {
 .table th, .table td {
   text-align: left; padding: 0.75rem 0.5rem; border-bottom: 1px solid var(--border); color: var(--text);
 }
-.table thead th { font-weight: 600; font-size: 0.9rem; }
+.table thead th { font-weight: 600; font-size: 0.9rem; color: var(--muted); }
+.table tbody tr:hover { background: rgba(255,255,255,0.02); }
 
 /* -------------------------
    11. STATUS TAGS
