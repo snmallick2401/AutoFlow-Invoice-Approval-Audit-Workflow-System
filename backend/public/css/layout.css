@@ -1,29 +1,44 @@
-/* frontend/css/layout.css */
+/* =========================================================
+   AutoFlow – Layout Styles
+   Purpose:
+   - App shell (Fixed Navbar/Sidebar + Scrollable Content)
+   - Responsive Grid System
+   - Navigation Styling
+   ========================================================= */
 
-/* --- App Shell --- */
+/* -------------------------
+   1. APP SHELL
+------------------------- */
 .app {
   display: flex;
   flex-direction: column;
   height: 100vh;
   background: var(--bg);
-  overflow: hidden;
+  overflow: hidden; /* Prevents body scroll, content scrolls internally */
 }
 
-/* --- Navbar --- */
+/* -------------------------
+   2. NAVBAR
+------------------------- */
 .navbar {
   height: 64px;
   flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 1.5rem;
+  padding: 0 2rem;
   background: var(--card);
   border-bottom: 1px solid var(--border);
   z-index: 50;
   transition: padding 0.2s ease;
 }
 
-.nav-left, .nav-right { display: flex; align-items: center; gap: 1rem; }
+.nav-left,
+.nav-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
 
 .brand {
   display: flex;
@@ -31,48 +46,65 @@
   gap: 0.6rem;
   text-decoration: none;
   color: var(--text);
-  font-weight: 600;
+  font-weight: 700;
+  font-size: 1.25rem;
   white-space: nowrap;
 }
-.brand-logo { font-size: 1.4rem; line-height: 1; }
 
-.user-info { text-align: right; line-height: 1.2; }
-.user-name { display: block; font-size: 0.9rem; font-weight: 500; }
-.role-badge {
-  display: inline-block;
-  font-size: 0.65rem;
-  padding: 0.1rem 0.5rem;
-  border-radius: 999px;
-  background: rgba(79, 70, 229, 0.1);
-  color: var(--primary);
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.02em;
+.brand-logo {
+  font-size: 1.4rem;
+  line-height: 1;
 }
 
-/* --- Main Layout --- */
+.user-info {
+  text-align: right;
+  line-height: 1.2;
+  margin-right: 0.5rem;
+}
+
+.user-name {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.role-badge {
+  display: inline-block;
+  font-size: 0.7rem;
+  color: var(--muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* -------------------------
+   3. LAYOUT CONTAINER
+------------------------- */
 .layout {
   display: flex;
   flex: 1;
-  overflow: hidden;
+  overflow: hidden; /* Contains the scrollable areas */
   position: relative;
 }
 
-/* --- Sidebar --- */
+/* -------------------------
+   4. SIDEBAR
+------------------------- */
 .sidebar {
   width: 260px;
   background: var(--card);
   border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
+  flex-shrink: 0;
   transition: width 0.3s ease;
   z-index: 40;
-  flex-shrink: 0;
 }
 
 .sidebar-nav {
   flex: 1;
-  padding: 1rem 0.75rem;
+  padding: 1.5rem 1rem;
   overflow-y: auto;
   overflow-x: hidden;
 }
@@ -83,76 +115,113 @@
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: 0.5rem;
 }
 
 .nav-link {
   display: flex;
   align-items: center;
-  gap: 0.8rem;
+  gap: 0.75rem;
   padding: 0.75rem 1rem;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-sm);
   color: var(--muted);
   text-decoration: none;
   font-weight: 500;
+  font-size: 0.9rem;
   transition: all 0.2s ease;
   white-space: nowrap;
   overflow: hidden;
 }
 
-.nav-link:hover { background-color: var(--bg); color: var(--text); }
+.nav-link:hover {
+  background-color: var(--bg);
+  color: var(--text);
+}
+
 .nav-link.active {
-  background-color: var(--primary);
-  color: #fff;
-  box-shadow: var(--shadow-sm);
+  background-color: rgba(59, 130, 246, 0.1); /* Primary Light manual fallback */
+  color: var(--primary);
+  font-weight: 600;
 }
 
-.sidebar-footer {
-  padding: 1rem;
-  border-top: 1px solid var(--border);
-  text-align: center;
-  white-space: nowrap;
-  overflow: hidden;
+.site-footer {
+  /* Inherits positioning from your existing layout.css */
+  padding: 2rem 0 1.5rem;
+  margin-top: auto;
 }
 
-/* Desktop Collapsed State */
+/* --- COLLAPSED STATE (Desktop) --- */
 @media (min-width: 769px) {
-  .sidebar.collapsed { width: 72px; }
-  .sidebar.collapsed .sidebar-footer p { opacity: 0; pointer-events: none; }
-  .sidebar.collapsed .nav-link { justify-content: center; padding-left: 0; padding-right: 0; }
-  .sidebar.collapsed .nav-link span:nth-child(2) { display: none; }
+  .sidebar.collapsed {
+    width: 72px;
+  }
+
+  .sidebar.collapsed .sidebar-footer p {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .sidebar.collapsed .nav-link {
+    justify-content: center;
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  .sidebar.collapsed .nav-link span:nth-child(2) {
+    display: none;
+  }
 }
 
-/* --- Content Area --- */
+/* -------------------------
+   5. CONTENT AREA
+------------------------- */
 .content {
   flex: 1;
   padding: 2rem;
   overflow-y: auto;
   scroll-behavior: smooth;
   background-color: var(--bg);
-  min-width: 0;
+  min-width: 0; /* Prevents flex children from blowing out */
+  display: flex;
+  flex-direction: column;
 }
-.content-width { max-width: 1200px; margin: 0 auto; }
 
-/* --- Page Header --- */
+.content-width {
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+  flex: 1; /* Pushes footer to bottom if content is short */
+}
+
+/* -------------------------
+   6. PAGE HEADER
+------------------------- */
 .page-header {
   margin-bottom: 2rem;
   display: flex;
   justify-content: space-between;
-  align-items: flex-end;
+  align-items: center;
 }
+
 .page-title {
   font-size: 1.75rem;
   font-weight: 700;
-  letter-spacing: -0.025em;
   color: var(--text);
+  letter-spacing: -0.025em;
+  margin-bottom: 0.25rem;
 }
-.page-breadcrumbs { font-size: 0.85rem; color: var(--muted); margin-bottom: 0.25rem; }
 
-/* --- Grid Utilities --- */
+.page-breadcrumbs {
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+/* -------------------------
+   7. GRID UTILITIES
+------------------------- */
 .kpi-row {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 1.5rem;
   margin-bottom: 2rem;
 }
@@ -164,22 +233,44 @@
   align-items: start;
 }
 
+/* -------------------------
+   8. PANELS
+------------------------- */
+/* Note: Base styles for panels are in components.css/theme.css, 
+   layout.css handles their position within the grid */
 .panel {
-  background: var(--card);
-  border-radius: var(--radius-md);
-  border: 1px solid var(--border);
-  padding: 1.25rem;
-  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
+
 .panel-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
 }
-.panel-title { font-size: 1.1rem; font-weight: 600; }
 
-/* --- Mobile Responsiveness --- */
+.panel-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+/* -------------------------
+   9. SITE FOOTER
+------------------------- */
+.site-footer {
+  text-align: center;
+  padding: 2rem 0 1rem;
+  margin-top: auto;
+  font-size: 0.8rem;
+  color: var(--muted);
+  opacity: 0.8;
+}
+
+/* -------------------------
+   10. MOBILE RESPONSIVENESS
+------------------------- */
 .sidebar-overlay {
   position: fixed;
   inset: 0;
@@ -189,21 +280,43 @@
   pointer-events: none;
   transition: opacity 0.3s ease;
 }
-.sidebar.open ~ .sidebar-overlay { opacity: 1; pointer-events: auto; }
+
+.sidebar.open ~ .sidebar-overlay {
+  opacity: 1;
+  pointer-events: auto;
+}
 
 @media (max-width: 1024px) {
-  .two-column { grid-template-columns: 1fr; }
+  .two-column {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 768px) {
-  .app { height: 100vh; }
+  .app {
+    height: 100vh;
+  }
+
+  .navbar {
+    padding: 0 1rem;
+  }
+
+  .content {
+    padding: 1rem;
+  }
+
+  /* Off-canvas sidebar logic */
   .sidebar {
     position: absolute;
-    top: 0; left: 0; bottom: 0;
+    top: 0;
+    left: 0;
+    bottom: 0;
     transform: translateX(-100%);
-    box-shadow: var(--shadow-md);
+    box-shadow: var(--shadow-lg);
+    height: 100%;
   }
-  .sidebar.open { transform: translateX(0); }
-  .content { padding: 1rem; }
-  .navbar { padding: 0 1rem; }
+
+  .sidebar.open {
+    transform: translateX(0);
+  }
 }
