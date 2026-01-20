@@ -1,11 +1,10 @@
-// frontend/js/submit-invoice.js
+// backend/public/js/submit-invoice.js
 "use strict";
 
 (() => {
   const CONFIG = {
     TOKEN_KEY: "autoflow_token",
     USER_KEY: "autoflow_user",
-    API_BASE: (typeof window.API_BASE_URL === "string") ? window.API_BASE_URL : "http://localhost:5000"
   };
 
   const state = {
@@ -42,9 +41,11 @@
     if (ui.sidebarToggle) {
       ui.sidebarToggle.addEventListener("click", (e) => {
         e.preventDefault();
+        e.stopPropagation(); // Prevent bubbling conflicts
         toggleSidebar();
       });
     }
+    
     if (ui.sidebarOverlay) {
       ui.sidebarOverlay.addEventListener("click", closeSidebarMobile);
     }
@@ -55,6 +56,8 @@
       ui.form.addEventListener("submit", handleSubmit);
     }
   }
+
+  // --- Sidebar Logic ---
 
   function toggleSidebar() {
     if (!state.ui.sidebar) return;
@@ -70,6 +73,8 @@
     if (state.ui.sidebar) state.ui.sidebar.classList.remove("open");
   }
 
+  // --- User Logic ---
+
   function loadUserFromStorage() {
     try {
       const raw = sessionStorage.getItem(CONFIG.USER_KEY) || localStorage.getItem(CONFIG.USER_KEY);
@@ -78,11 +83,19 @@
   }
 
   async function populateUserHeader() {
-    if (!state.currentUser && typeof window.apiFetch === "function") {
+    // If we have an apiFetch wrapper, try to get fresh me data
+    if (typeof window.apiFetch === "function") {
       try {
         const data = await window.apiFetch("/api/auth/me");
-        if (data) state.currentUser = data.user || data;
-      } catch (e) {}
+        if (data && (data.user || data.email)) {
+          state.currentUser = data.user || data;
+          // Keep storage in sync with fresh server data
+          localStorage.setItem(CONFIG.USER_KEY, JSON.stringify(state.currentUser));
+        }
+      } catch (e) {
+        // Silently fail if 'me' endpoint isn't available, rely on storage
+        console.warn("Could not fetch fresh user details:", e);
+      }
     }
 
     const ui = state.ui;
@@ -96,57 +109,61 @@
     }
   }
 
+  // --- Form Submission ---
+
   async function handleSubmit(e) {
     e.preventDefault();
     const ui = state.ui;
+    
+    // Create FormData from the form element
     const formData = new FormData(ui.form);
 
-    // Validation
+    // 1. Client-side Validation
     const amount = parseFloat(formData.get("amount"));
-    if (isNaN(amount) || amount <= 0) {
-      alert("Please enter a valid amount.");
-      return;
-    }
-
+    const vendor = formData.get("vendorName");
+    const date = formData.get("invoiceDate");
     const file = formData.get("file");
+
+    if (!vendor) return alert("Vendor name is required.");
+    if (isNaN(amount) || amount <= 0) return alert("Please enter a valid positive amount.");
+    if (!date) return alert("Invoice date is required.");
+    
     if (!file || file.size === 0) {
-      alert("Please attach a valid invoice PDF.");
-      return;
+      return alert("Please attach a valid invoice PDF.");
+    }
+    // Simple MIME check
+    if (file.type !== "application/pdf") {
+      return alert("Only PDF files are allowed.");
     }
 
+    // 2. UI Loading State
+    const originalBtnText = ui.submitBtn.textContent;
     ui.submitBtn.disabled = true;
     ui.submitBtn.textContent = "Submitting...";
 
     try {
-      // Use apiFetch if available (handles auth automatically)
-      if (typeof window.apiFetch === "function") {
-        await window.apiFetch("/api/invoice/create", {
-          method: "POST",
-          body: formData
-        });
-      } else {
-        // Fallback fetch logic
-        const token = sessionStorage.getItem(CONFIG.TOKEN_KEY) || localStorage.getItem(CONFIG.TOKEN_KEY);
-        const headers = {}; 
-        if (token) headers["Authorization"] = `Bearer ${token}`;
-        
-        const res = await fetch(CONFIG.API_BASE + "/api/invoice/create", {
-          method: "POST",
-          headers, // Do NOT set Content-Type for FormData
-          body: formData
-        });
-        
-        if (!res.ok) throw new Error(`Error ${res.status}`);
+      if (typeof window.apiFetch !== "function") {
+        throw new Error("API client not initialized (apiFetch missing).");
       }
 
+      // apiFetch handles Authorization headers automatically
+      await window.apiFetch("/api/invoice/create", {
+        method: "POST",
+        body: formData
+      });
+
       alert("Invoice submitted successfully!");
+      
+      // Redirect to dashboard
       window.location.href = "dashboard.html";
 
     } catch (err) {
       console.error(err);
-      alert("Failed to submit invoice. Please try again.");
+      alert(err.message || "Failed to submit invoice. Please try again.");
+      
+      // Reset UI
       ui.submitBtn.disabled = false;
-      ui.submitBtn.textContent = "Submit Invoice";
+      ui.submitBtn.textContent = originalBtnText;
     }
   }
 
@@ -154,7 +171,8 @@
     sessionStorage.clear();
     localStorage.removeItem(CONFIG.TOKEN_KEY);
     localStorage.removeItem(CONFIG.USER_KEY);
-    window.location.href = "login.html";
+    // Updated redirect: login.html -> index.html
+    window.location.href = "index.html";
   }
 
 })();
