@@ -1,11 +1,13 @@
 // backend/src/routes/dashboardRoutes.js
 const express = require('express');
 const router = express.Router();
-
 const { protect } = require('../middleware/authMiddleware');
-const { getSummary } = require('../controllers/dashboardController');
+
+// IMPORT MUST MATCH CONTROLLER EXPORT EXACTLY
+const { getDashboardSummary } = require('../controllers/dashboardController');
 
 // GET /api/dashboard/summary
-router.get('/summary', protect, getSummary);
+// Logic: Fetch KPIs (Total, Pending, Approved, Rejected)
+router.get('/summary', protect, getDashboardSummary);
 
 module.exports = router;
