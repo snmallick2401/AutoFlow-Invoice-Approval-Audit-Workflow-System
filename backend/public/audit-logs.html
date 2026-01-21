@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AutoFlow — Audit Logs</title>
+
+  <link rel="stylesheet" href="css/base.css" />
+  <link rel="stylesheet" href="css/layout.css" />
+  <link rel="stylesheet" href="css/components.css" />
+  <link rel="stylesheet" href="css/theme.css" />
+
+  <style>
+    .footer-heart {
+      text-align: center;
+      font-family: 'Open Sans', sans-serif;
+      margin: 0;
+      font-size: 0.9rem;
+    }
+
+    .footer-heart a {
+      border-bottom: 1px solid #453886;
+      color: #453886;
+      padding-bottom: .25em;
+      text-decoration: none;
+      font-weight: 600;
+      transition: all 0.3s ease;
+    }
+
+    .footer-heart a:hover {
+      color: #2196f3;
+      background-image: url("data:image/svg+xml;charset=utf8,%3Csvg id='squiggle-link' xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' xmlns:ev='http://www.w3.org/2001/xml-events' viewBox='0 0 20 4'%3E%3Cstyle type='text/css'%3E.squiggle{animation:shift .3s linear infinite;}@keyframes shift {from {transform:translateX(0);}to {transform:translateX(-20px);}}%3C/style%3E%3Cpath fill='none' stroke='%23453886' stroke-width='2' class='squiggle' d='M0,3.5 c 5,0,5,-3,10,-3 s 5,3,10,3 c 5,0,5,-3,10,-3 s 5,3,10,3'/%3E%3C/svg%3E");
+      background-position: bottom;
+      background-repeat: repeat-x;
+      background-size: 20%;
+      border-bottom: 0;
+      padding-bottom: .3em;
+      text-decoration: none;
+    }
+
+    .emoji {
+      vertical-align: middle;
+    }
+
+    /* Dark mode adjustments for footer links */
+    html.dark .footer-heart a {
+      color: #a5b4fc;
+      border-color: #a5b4fc;
+    }
+    html.dark .footer-heart a:hover {
+      color: #60a5fa;
+      background-image: url("data:image/svg+xml;charset=utf8,%3Csvg id='squiggle-link' xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 4'%3E%3Cstyle type='text/css'%3E.squiggle{animation:shift .3s linear infinite;}@keyframes shift {from {transform:translateX(0);}to {transform:translateX(-20px);}}%3C/style%3E%3Cpath fill='none' stroke='%23a5b4fc' stroke-width='2' class='squiggle' d='M0,3.5 c 5,0,5,-3,10,-3 s 5,3,10,3 c 5,0,5,-3,10,-3 s 5,3,10,3'/%3E%3C/svg%3E");
+    }
+  </style>
+
+  <script>
+    /* Prevent Flash of Unstyled Theme */
+    (function () {
+      try {
+        const localTheme = localStorage.getItem("theme");
+        const sysTheme = window.matchMedia("(prefers-color-scheme: dark)").matches;
+        if (localTheme === "dark" || (!localTheme && sysTheme)) {
+          document.documentElement.classList.add("dark");
+        } else {
+          document.documentElement.classList.remove("dark");
+        }
+      } catch (e) {}
+    })();
+  </script>
+</head>
+
+<body class="app">
+
+  <header class="navbar" role="banner">
+    <div class="nav-left">
+      <button id="sidebarToggle" class="icon-btn" aria-label="Toggle Navigation">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+      </button>
+
+      <a href="dashboard.html" class="brand">
+        <span class="brand-logo">🔁</span>
+        <span class="brand-name">AutoFlow</span>
+      </a>
+    </div>
+
+    <div class="nav-right">
+      <div class="user-info">
+        <span id="userName" class="user-name">Loading...</span>
+        <span id="userRole" class="role-badge">...</span>
+      </div>
+
+      <button id="themeToggle" class="icon-btn" aria-label="Toggle Dark Mode" title="Switch Theme">
+        🌙
+      </button>
+
+      <button id="logoutBtn" class="btn neutral small" title="Sign Out">
+        Sign Out
+      </button>
+    </div>
+  </header>
+
+  <div class="layout">
+    
+    <aside class="sidebar" id="sidebar">
+      <nav class="sidebar-nav">
+        <ul class="nav-list">
+          <li>
+            <a href="dashboard.html" class="nav-link">
+              <span>📊</span>
+              <span>Dashboard</span>
+            </a>
+          </li>
+          <li class="role-restricted" data-role="employee,admin">
+            <a href="submit-invoice.html" class="nav-link">
+              <span>📝</span>
+              <span>Submit Invoice</span>
+            </a>
+          </li>
+          <li class="role-restricted" data-role="manager,finance,admin">
+            <a href="approvals.html" class="nav-link">
+              <span>✅</span>
+              <span>Approvals</span>
+            </a>
+          </li>
+          <li class="role-restricted" data-role="admin,finance">
+            <a href="reports.html" class="nav-link">
+              <span>📈</span>
+              <span>Reports</span>
+            </a>
+          </li>
+          <li class="role-restricted" data-role="admin">
+            <a href="audit-logs.html" class="nav-link active">
+              <span>🛡️</span>
+              <span>Audit Logs</span>
+            </a>
+          </li>
+        </ul>
+      </nav>
+      <div class="sidebar-footer">
+        <p style="font-size: 0.7rem; color: var(--muted); margin: 0;">v1.0.0 • AutoFlow</p>
+      </div>
+    </aside>
+
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <main class="content" id="mainContent" style="display: flex; flex-direction: column; min-height: calc(100vh - 64px);">
+      <div class="content-width" style="flex-grow: 1; display: flex; flex-direction: column; gap: 1.5rem;">
+        
+        <header class="page-header" style="margin-bottom: 0;">
+          <div>
+            <h1 class="page-title">Audit Logs</h1>
+            <p class="page-breadcrumbs">Security & System Events</p>
+          </div>
+        </header>
+
+        <section class="card">
+          <form id="auditFilterForm" class="kpi-row" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 0;">
+            <div class="form-group" style="margin-bottom:0;">
+              <label style="font-size: 0.85rem; font-weight: 500;">Action Type</label>
+              <select id="filterAction">
+                <option value="">All Actions</option>
+                <option value="USER_LOGIN">Login</option>
+                <option value="USER_LOGIN_FAILED">Login Failed</option>
+                <option value="INVOICE_SUBMITTED">Invoice Submitted</option>
+                <option value="INVOICE_APPROVED">Invoice Approved</option>
+                <option value="INVOICE_REJECTED">Invoice Rejected</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin-bottom:0;">
+              <label style="font-size: 0.85rem; font-weight: 500;">Date</label>
+              <input type="date" id="filterDate" />
+            </div>
+            <div class="form-group" style="margin-bottom:0; display: flex; align-items: flex-end;">
+              <button type="submit" class="btn primary" style="width: 100%;">Filter Logs</button>
+            </div>
+          </form>
+        </section>
+
+        <section class="panel" style="flex: 1; display: flex; flex-direction: column; margin-bottom: 2rem;">
+          <div class="panel-header">
+            <h2 class="panel-title">System Events</h2>
+            <div style="display:flex; gap:0.5rem;">
+              <button id="prevPage" class="btn neutral small" disabled>←</button>
+              <button id="nextPage" class="btn neutral small" disabled>→</button>
+            </div>
+          </div>
+
+          <div class="table-wrap" style="flex: 1;">
+            <table class="table" id="auditTable">
+              <thead>
+                <tr>
+                  <th>Timestamp</th>
+                  <th>Action</th>
+                  <th>User / Actor</th>
+                  <th>IP Address</th>
+                  <th>Resource</th>
+                  <th style="text-align: right;">Details</th>
+                </tr>
+              </thead>
+              <tbody id="auditTableBody"></tbody>
+            </table>
+            <div id="tableLoading" class="text-center muted" style="padding: 2rem;">Loading logs...</div>
+            <div id="tableEmpty" class="empty-state hidden">No logs found matching criteria.</div>
+          </div>
+        </section>
+
+      </div>
+
+      <footer class="site-footer" style="padding-top: 1rem; padding-bottom: 1rem; margin-top: auto;">
+        <p class="footer-heart">
+          Made with 
+          <g-emoji class="g-emoji" alias="heart" fallback-src="https://github.githubassets.com/images/icons/emoji/unicode/2764.png">
+            <img class="emoji" alt="heart" height="20" width="20" src="https://github.githubassets.com/images/icons/emoji/unicode/2764.png">
+          </g-emoji> 
+          by <a href="https://www.linkedin.com/in/snmallick2401/" target="_blank" rel="noopener noreferrer">S N Mallick</a>
+        </p>
+      </footer>
+    </main>
+  </div>
+
+  <div id="metaModal" class="modal hidden" aria-hidden="true">
+    <div class="modal-content" style="max-width: 500px;">
+      <header class="modal-header">
+        <h3>Log Details</h3>
+      </header>
+      <div class="modal-body">
+        <pre id="metaContent" style="background: var(--bg); padding: 1rem; border-radius: 6px; overflow-x: auto; font-size: 0.85rem; color: var(--text); border: 1px solid var(--border);"></pre>
+      </div>
+      <footer class="modal-footer">
+        <button id="closeMetaBtn" class="btn neutral">Close</button>
+      </footer>
+    </div>
+  </div>
+
+  <script>window.API_BASE_URL = "";</script>
+
+  <script src="js/theme.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/audit-logs.js"></script>
+</body>
+</html>
