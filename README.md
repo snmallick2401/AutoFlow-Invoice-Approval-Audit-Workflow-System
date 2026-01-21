@@ -1,44 +1,108 @@
-# AutoFlow — Invoice Approval & Audit System
+# AutoFlow — Invoice Approval & Audit Workflow System
 
-[![Live Demo](https://img.shields.io/badge/Live-Demo-brightgreen?style=for-the-badge&logo=render)](https://autoflow-vyvd.onrender.com)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
-
-**AutoFlow** is a secure, full-stack workflow automation platform designed to streamline invoice processing for enterprises. It features Role-Based Access Control (RBAC), immutable audit logging for SOC2 compliance, and real-time financial analytics.
+![License](https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge)
+![Status](https://img.shields.io/badge/Status-Live-success?style=for-the-badge)
+![Tech](https://img.shields.io/badge/Stack-MERN-yellow?style=for-the-badge)
 
 > **Live Demo:** [https://autoflow-vyvd.onrender.com](https://autoflow-vyvd.onrender.com)  
-> *Test Credentials located in "Installation" section below.*
+> *Test credentials provided below.*
 
 ---
 
-## 📸 Screenshots
+## 📖 Overview
 
-| Dashboard & KPIs | Role-Based Approval Queue |
-|:---:|:---:|
-| ![Dashboard](https://placehold.co/600x400?text=Dashboard+Screenshot) | ![Approvals](https://placehold.co/600x400?text=Approval+Queue) |
+**AutoFlow** is a secure, full-stack workflow automation platform designed to streamline financial operations for enterprises. It replaces manual invoice processing with a digital, role-based pipeline featuring granular access control, real-time analytics, and tamper-proof audit logging.
 
-| Immutable Audit Logs | Interactive Analytics |
-|:---:|:---:|
-| ![Audit Logs](https://placehold.co/600x400?text=Audit+Log+Viewer) | ![Reports](https://placehold.co/600x400?text=Financial+Reports) |
+Built to demonstrate **SOC2-ready architecture**, it enforces strict data immutability for audit trails and uses a state-machine approach for invoice lifecycle management.
+
+---
+
+## 📸 Dashboard Preview
+
+![AutoFlow Dashboard](public/assets/screencapture-autoflow-vyvd-onrender-dashboard-html-2026-01-21-22_57_17.png)
 
 ---
 
 ## 🚀 Key Features
 
-* **🛡️ Multi-Tier RBAC**: Granular access control for 4 distinct roles (**Admin, Finance, Manager, Employee**) preventing unauthorized access to sensitive financial data.
-* **🔒 Immutable Audit Trails**: A tamper-proof, append-only ledger (`AuditLog` model) that records every user action (Login, Approve, Reject) with IP tracking for security compliance.
-* **📊 Dynamic Dashboard**: Real-time aggregation of financial KPIs (Total Spend, Pending Approvals) using MongoDB Aggregation Pipelines.
-* **⚡ Smart Environment Detection**: Frontend automatically switches between `localhost` and production APIs without manual code changes.
-* **🔐 Secure Authentication**: JWT-based stateless authentication with bcrypt password hashing and robust middleware protection.
+### 🛡️ Enterprise Security & RBAC
+* **Multi-Tier Access:** 4 distinct roles (**Admin, Finance, Manager, Employee**) with strict middleware guards ensuring users only access data relevant to their clearance level.
+* **JWT Authentication:** Stateless, secure session management with Bcrypt password hashing.
+
+### 🔒 Compliance & Auditing
+* **Immutable Ledger:** Custom Mongoose middleware prevents any modification or deletion of `AuditLog` records, mimicking blockchain immutability for compliance.
+* **Granular Tracking:** logs every action (Login, Approval, Rejection) with timestamps, actor IDs, and IP addresses.
+
+### 📊 Real-Time Analytics
+* **Aggregation Pipelines:** MongoDB aggregation is used to calculate live KPIs (Total Spend, Pending Actions, Rejection Rates) instantly.
+* **Interactive Visuals:** Dynamic Chart.js integration for spending trends and status distribution.
+
+### ⚡ Developer Experience
+* **Smart Environment Detection:** The frontend automatically detects its environment (`localhost` vs. `production`), eliminating the need for manual API URL configuration.
+* **Automated Seeding:** One-click database population script for rapid testing and deployment.
 
 ---
 
 ## 🛠️ Tech Stack
 
-* **Backend:** Node.js, Express.js (RESTful API)
-* **Database:** MongoDB Atlas, Mongoose ODM
-* **Frontend:** Vanilla JS (ES6+), HTML5, CSS3 (CSS Variables for Dark Mode)
-* **Security:** Helmet.js, CORS, JSON Web Tokens (JWT), Bcrypt
-* **Deployment:** Render (Cloud Hosting)
+| Component | Technology | Key Usage |
+| :--- | :--- | :--- |
+| **Backend** | Node.js, Express.js | RESTful API, Middleware Guards |
+| **Database** | MongoDB Atlas | Data Persistence, Aggregation |
+| **ODM** | Mongoose | Schema Validation, Hooks |
+| **Frontend** | Vanilla JS (ES6+) | DOM Manipulation, Fetch API |
+| **Styling** | CSS3 (Variables) | Dark/Light Theme, Responsive Grid |
+| **Deployment**| Render | Cloud Hosting, CI/CD |
+
+---
+
+## 🧪 Try It Out (Test Credentials)
+
+Use these accounts to explore the different role-based views in the live demo:
+
+| Role | Email | Password | Capability |
+| :--- | :--- | :--- | :--- |
+| **Admin** | `admin@autoflow.local` | `password123` | Full system access, Audit Logs |
+| **Finance** | `finance@autoflow.local` | `password123` | Final approval, Financial Reports |
+| **Manager** | `manager@autoflow.local` | `password123` | First-level approval |
+| **Employee**| `john@autoflow.local` | `password123` | Submit invoices, View own history |
+
+---
+
+## ⚡ Local Installation
+
+If you want to run this locally:
+
+1.  **Clone the repo**
+    ```bash
+    git clone [https://github.com/snmallick2401/AutoFlow-Invoice-Approval-Audit-Workflow-System.git](https://github.com/snmallick2401/AutoFlow-Invoice-Approval-Audit-Workflow-System.git)
+    cd AutoFlow-Invoice-Approval-Audit-Workflow-System
+    ```
+
+2.  **Install Dependencies**
+    ```bash
+    npm install
+    ```
+
+3.  **Configure Environment**
+    Create a `.env` file in the root directory:
+    ```env
+    PORT=5000
+    MONGO_URI=mongodb://localhost:27017/autoflow
+    JWT_SECRET=your_secret_key
+    ```
+
+4.  **Seed Database**
+    Initialize the database with the test users:
+    ```bash
+    node src/seed.js
+    ```
+
+5.  **Run Server**
+    ```bash
+    npm start
+    ```
+    Visit `http://localhost:5000` in your browser.
 
 ---
 
@@ -46,12 +110,12 @@
 
 ```bash
 AutoFlow/
-├── src/
-│   ├── controllers/      # Business logic (Auth, Invoices, Audits)
-│   ├── middleware/       # RBAC guards & JWT verification
-│   ├── models/           # Mongoose schemas (Immutable AuditLog)
-│   └── routes/           # API route definitions
-├── public/               # Responsive frontend (HTML/CSS/JS)
-│   ├── js/api.js         # Centralized API wrapper
-│   └── css/theme.css     # Dark/Light mode variables
-└── server.js             # Application entry point
+├── public/             # Frontend (HTML/CSS/JS)
+│   ├── js/api.js       # API Wrapper with Smart URL Detection
+│   └── css/theme.css   # Theme variables
+├── src/                # Backend Logic
+│   ├── controllers/    # Request Handlers
+│   ├── middleware/     # Auth & Role Guards
+│   ├── models/         # Database Schemas (User, Invoice, AuditLog)
+│   └── routes/         # API Endpoints
+└── server.js           # Entry Point
