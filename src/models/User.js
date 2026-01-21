@@ -1,19 +1,12 @@
-/**
- * User Model — AutoFlow
- * =================================================
- * Responsibilities:
- * - Define user schema with strict validation
- * - Handle password hashing (bcrypt)
- * - Sanitize output (remove sensitive data)
- */
+// backend/src/models/User.js
 
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
-// Allowed Roles for RBAC
+// Allowed Roles
 const ROLES = ['admin', 'employee', 'manager', 'finance'];
 
-// Standard Email Regex for validation
+// Email Regex
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const userSchema = new mongoose.Schema(
@@ -54,54 +47,25 @@ const userSchema = new mongoose.Schema(
   }
 );
 
-// --------------------------------------------------
-// Static Properties
-// --------------------------------------------------
 userSchema.statics.ROLES = ROLES;
 
-// --------------------------------------------------
-// Middleware (Hooks)
-// --------------------------------------------------
-/**
- * Pre-save hook to hash password.
- * Restored the 'next' parameter to ensure the middleware chain 
- * completes properly for audit logging and database synchronization.
- */
-userSchema.pre('save', async function (next) {
-  try {
-    // 1. If password isn't modified, skip hashing and move to the next middleware
-    if (!this.isModified('password')) {
-      return next();
-    }
+// =========================================================
+//  FIXED MIDDLEWARE: Removed 'next' parameter
+// =========================================================
+userSchema.pre('save', async function () {
+  // 1. If password isn't modified, return immediately (Promise resolves)
+  if (!this.isModified('password')) return;
 
-    // 2. Generate salt and hash the password
-    const salt = await bcrypt.genSalt(10);
-    this.password = await bcrypt.hash(this.password, salt);
-    
-    // 3. Signal that this middleware is complete
-    next();
-  } catch (err) {
-    // 4. Pass errors to the next error-handling middleware
-    next(err);
-  }
+  // 2. Hash the password
+  // Mongoose automatically catches errors from async functions
+  const salt = await bcrypt.genSalt(10);
+  this.password = await bcrypt.hash(this.password, salt);
 });
 
-// --------------------------------------------------
-// Instance Methods
-// --------------------------------------------------
-/**
- * Compare provided plain-text password with stored hash.
- * @param {string} candidatePassword
- * @returns {Promise<boolean>}
- */
 userSchema.methods.matchPassword = async function (candidatePassword) {
   return await bcrypt.compare(candidatePassword, this.password);
 };
 
-/**
- * Clean the user object before sending it to the frontend.
- * Removes password hashes and internal Mongoose version keys.
- */
 userSchema.methods.toJSON = function () {
   const user = this.toObject();
   delete user.password;
@@ -110,5 +74,4 @@ userSchema.methods.toJSON = function () {
 };
 
 const User = mongoose.model('User', userSchema);
-
 module.exports = User;
