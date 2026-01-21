@@ -1,0 +1,2 @@
+# This file allows the 'uploads' directory to be tracked by Git
+# even though the content inside (PDFs) is ignored by .gitignore.
