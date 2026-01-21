@@ -1,108 +1,81 @@
 // backend/src/controllers/dashboardController.js
 const Invoice = require('../models/Invoice');
 
-const getSummary = async (req, res) => {
+/**
+ * GET /api/dashboard/summary
+ * Returns KPI metrics with Role-Aware "Pending" logic
+ * (Managers see fresh invoices, Finance sees those approved by Manager)
+ */
+const getDashboardSummary = async (req, res) => {
   try {
-    if (!req.user || !req.user._id || !req.user.role) {
+    if (!req.user || !req.user._id) {
       return res.status(401).json({ message: 'Authentication required' });
     }
 
-    const role = req.user.role;
-    const userId = req.user._id;
+    const { role, _id } = req.user;
 
-    // Base filter (role-scoped)
-    const baseMatch =
-      role === 'employee' ? { submittedBy: userId } : {};
+    // 1. Define Base Scope
+    // Employees: Only their own docs
+    // Approvers (Admin/Manager/Finance): All docs
+    const baseMatch = role === 'employee' ? { submittedBy: _id } : {};
 
-    // 1) totalInvoices
-    const totalInvoices = await Invoice.countDocuments(baseMatch);
-
-    // 2) rejectedCount
-    const rejectedCount = await Invoice.countDocuments({
-      ...baseMatch,
-      status: 'REJECTED',
-    });
-
-    // 3) approvedAmount (sum)
-    const approvedAgg = await Invoice.aggregate([
-      { $match: { ...baseMatch, status: 'APPROVED' } },
-      {
-        $group: {
-          _id: null,
-          totalApproved: {
-            $sum: { $ifNull: ['$amount', 0] },
-          },
-        },
-      },
-    ]);
-
-    const approvedAmount =
-      approvedAgg.length > 0 ? approvedAgg[0].totalApproved : 0;
-
-    // 4) pendingApprovals (role-specific)
-    let pendingApprovals = 0;
+    // 2. Define "My Pending" Logic
+    // This distinguishes between "Pending Manager" vs "Pending Finance"
+    let pendingQuery = { status: 'PENDING' };
 
     if (role === 'employee') {
-      // Employee: their own pending invoices
-      pendingApprovals = await Invoice.countDocuments({
-        ...baseMatch,
-        status: 'PENDING',
-      });
+      // Employees see all their own pending items
+      pendingQuery = { ...baseMatch, status: 'PENDING' };
+
     } else if (role === 'manager') {
-      // Manager-stage: PENDING + no approval history
-      const agg = await Invoice.aggregate([
-        { $match: { status: 'PENDING' } },
-        {
-          $addFields: {
-            approvalCount: {
-              $size: { $ifNull: ['$approvalHistory', []] },
-            },
-          },
-        },
-        { $match: { approvalCount: 0 } },
-        { $count: 'count' },
-      ]);
+      // Managers need to see invoices with 0 approvals (Fresh)
+      // We check that the approvalHistory array is empty
+      pendingQuery = { 
+        status: 'PENDING', 
+        approvalHistory: { $size: 0 } 
+      };
 
-      pendingApprovals = agg.length > 0 ? agg[0].count : 0;
     } else if (role === 'finance') {
-      // Finance-stage: PENDING + last approval role === 'manager'
-      const agg = await Invoice.aggregate([
-        { $match: { status: 'PENDING' } },
-        {
-          $addFields: {
-            rolesArray: {
-              $map: {
-                input: { $ifNull: ['$approvalHistory', []] },
-                as: 'h',
-                in: '$$h.role',
-              },
-            },
-          },
-        },
-        {
-          $addFields: {
-            lastRole: { $arrayElemAt: ['$rolesArray', -1] },
-          },
-        },
-        { $match: { lastRole: 'manager' } },
-        { $count: 'count' },
-      ]);
-
-      pendingApprovals = agg.length > 0 ? agg[0].count : 0;
+      // Finance needs to see invoices that are PENDING but have history (passed Manager)
+      // We check that approvalHistory is NOT empty
+      pendingQuery = { 
+        status: 'PENDING', 
+        approvalHistory: { $not: { $size: 0 } } 
+      };
     }
+    // Admin keeps default: { status: 'PENDING' } (sees everything)
 
-    return res.status(200).json({
-      totalInvoices,
-      pendingApprovals,
-      approvedAmount,
-      rejectedCount,
+    // 3. Execute Queries in Parallel (Faster)
+    const [total, pendingCount, rejected, approvedAgg] = await Promise.all([
+      // A. Total Invoices (Scoped)
+      Invoice.countDocuments(baseMatch),
+
+      // B. "My" Pending Actions
+      Invoice.countDocuments(pendingQuery),
+
+      // C. Rejected Count (Scoped)
+      Invoice.countDocuments({ ...baseMatch, status: 'REJECTED' }),
+
+      // D. Approved Value (Scoped)
+      Invoice.aggregate([
+        { $match: { ...baseMatch, status: 'APPROVED' } },
+        { $group: { _id: null, totalAmount: { $sum: '$amount' } } }
+      ])
+    ]);
+
+    // 4. Send Response
+    res.status(200).json({
+      totalInvoices: total,
+      pendingApprovals: pendingCount,
+      rejectedCount: rejected,
+      approvedAmount: approvedAgg[0]?.totalAmount || 0,
     });
+
   } catch (err) {
-    console.error('dashboard summary error:', err);
-    return res.status(500).json({ message: 'Server error' });
+    console.error('Dashboard Error:', err);
+    res.status(500).json({ message: 'Server error generating dashboard' });
   }
 };
 
-module.exports = {
-  getSummary,
-};
+// Export must match the import in dashboardRoutes.js
+module.exports = { getDashboardSummary };
