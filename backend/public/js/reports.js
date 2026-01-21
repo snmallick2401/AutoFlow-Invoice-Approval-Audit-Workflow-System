@@ -22,7 +22,6 @@
   function init() {
     loadUser();
     attachListeners();
-    // Default: Load last 30 days
     setDefaultDates();
     fetchReportData();
   }
@@ -37,7 +36,7 @@
         const nameEl = document.getElementById("userName");
         const roleEl = document.getElementById("userRole");
 
-        if (nameEl) nameEl.textContent = user.name || "User";
+        if (nameEl) nameEl.textContent = user.name || user.email || "User";
         if (roleEl) {
           roleEl.textContent = (user.role || "").toUpperCase();
           roleEl.className = `role-badge ${user.role}`;
@@ -49,26 +48,37 @@
   }
 
   function attachListeners() {
-    // Sidebar Toggles
-    document.getElementById("sidebarToggle")?.addEventListener("click", (e) => {
-      e.preventDefault();
-      const sb = document.getElementById("sidebar");
-      if (window.innerWidth < 768) sb.classList.toggle("open");
-      else sb.classList.toggle("collapsed");
-    });
+    // 1. Sidebar Toggles
+    const sidebarToggle = document.getElementById("sidebarToggle");
+    const sidebar = document.getElementById("sidebar");
+    const sidebarOverlay = document.getElementById("sidebarOverlay");
 
-    document.getElementById("sidebarOverlay")?.addEventListener("click", () => {
-      document.getElementById("sidebar").classList.remove("open");
-    });
+    if (sidebarToggle && sidebar) {
+      sidebarToggle.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation(); // Stop event bubbling to prevent double-clicks
+        if (window.innerWidth <= 768) {
+          sidebar.classList.toggle("open");
+        } else {
+          sidebar.classList.toggle("collapsed");
+        }
+      });
+    }
 
-    // Logout
+    if (sidebarOverlay) {
+      sidebarOverlay.addEventListener("click", () => {
+        sidebar.classList.remove("open");
+      });
+    }
+
+    // 2. Logout
     document.getElementById("logoutBtn")?.addEventListener("click", () => {
       sessionStorage.clear();
       localStorage.clear();
-      window.location.href = "index.html"; // Changed from login.html to index.html for deployment
+      window.location.href = "index.html"; 
     });
 
-    // Filter Form
+    // 3. Filter Form
     const filterForm = document.getElementById("reportFilterForm");
     if (filterForm) {
       filterForm.addEventListener("submit", (e) => {
@@ -77,7 +87,7 @@
       });
     }
 
-    // Export Button
+    // 4. Export Button
     document.getElementById("exportBtn")?.addEventListener("click", exportCSV);
   }
 
@@ -113,8 +123,8 @@
     const end = endInput ? endInput.value : "";
 
     try {
+      // API call
       const query = `?startDate=${start}&endDate=${end}`;
-      // Call Backend
       const data = await window.apiFetch(`/api/reports/analytics${query}`);
 
       if (loading) loading.classList.add("hidden");
@@ -122,7 +132,6 @@
       // Handle empty data
       if (!data || !data.invoices || data.invoices.length === 0) {
         if (empty) empty.classList.remove("hidden");
-        // Clear charts if empty
         if(state.charts.spending) state.charts.spending.destroy();
         if(state.charts.status) state.charts.status.destroy();
         return;
@@ -145,13 +154,13 @@
 
     if (!ctxSpending || !ctxStatus) return;
 
-    // 1. Spending Chart (Bar)
+    // Spending Chart
     if (state.charts.spending) state.charts.spending.destroy();
     
     state.charts.spending = new Chart(ctxSpending, {
       type: 'bar',
       data: {
-        labels: data.monthlyStats.map(item => item._id), // e.g. "2023-10"
+        labels: data.monthlyStats.map(item => item._id),
         datasets: [{
           label: 'Total Spending (INR)',
           data: data.monthlyStats.map(item => item.totalAmount),
@@ -166,18 +175,17 @@
       }
     });
 
-    // 2. Status Chart (Doughnut)
+    // Status Chart
     if (state.charts.status) state.charts.status.destroy();
 
     const statusLabels = data.statusStats.map(s => (s._id || "Unknown").toUpperCase());
     const statusValues = data.statusStats.map(s => s.count);
     
-    // Assign specific colors to statuses
     const statusColors = data.statusStats.map(s => {
       const id = (s._id || "").toLowerCase();
-      if(id === 'approved') return '#16a34a'; // Green
-      if(id === 'rejected') return '#dc2626'; // Red
-      return '#f59e0b'; // Amber (Pending)
+      if(id === 'approved') return '#16a34a';
+      if(id === 'rejected') return '#dc2626';
+      return '#f59e0b';
     });
 
     state.charts.status = new Chart(ctxStatus, {
@@ -207,8 +215,6 @@
     invoices.forEach(inv => {
       const tr = document.createElement("tr");
       const status = (inv.status || "pending").toLowerCase();
-      
-      // Use invoiceId if available, fallback to shortened _id
       const displayId = inv.invoiceId || (inv._id ? inv._id.substring(0,8) : "N/A");
       
       tr.innerHTML = `
@@ -224,7 +230,6 @@
   }
 
   function exportCSV() {
-    // Simple client-side export based on current table data
     const rows = [];
     rows.push(["Invoice ID", "Vendor", "Date", "Status", "Amount"]);
 
@@ -235,11 +240,11 @@
       const cols = tr.querySelectorAll("td");
       if (cols.length >= 5) {
         rows.push([
-          cols[0].innerText, // ID
-          cols[1].innerText, // Vendor
-          cols[2].innerText, // Date
-          cols[3].innerText, // Status
-          cols[4].innerText.replace(/[^0-9.-]+/g,"") // Clean currency (remove ₹/,)
+          cols[0].innerText,
+          cols[1].innerText,
+          cols[2].innerText,
+          cols[3].innerText,
+          cols[4].innerText.replace(/[^0-9.-]+/g,"")
         ]);
       }
     });
@@ -255,8 +260,6 @@
     link.click();
     document.body.removeChild(link);
   }
-
-  // --- Helpers ---
 
   function escapeHtml(str) {
     if (!str) return "";
