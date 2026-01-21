@@ -1,108 +1,60 @@
-# AutoFlow — Invoice Approval & Audit Workflow System
+# AutoFlow — Enterprise Invoice Approval & Audit System
 
-![License](https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge)
-![Status](https://img.shields.io/badge/Status-Live-success?style=for-the-badge)
-![Tech](https://img.shields.io/badge/Stack-MERN-yellow?style=for-the-badge)
+[![Live Demo](https://img.shields.io/badge/Live-Demo-brightgreen?style=for-the-badge&logo=render&logoColor=white)](https://autoflow-vyvd.onrender.com)
+[![Tech Stack](https://img.shields.io/badge/Stack-MERN-blue?style=for-the-badge)](https://github.com/snmallick2401/AutoFlow-Invoice-Approval-Audit-Workflow-System)
+[![License](https://img.shields.io/badge/License-MIT-purple?style=for-the-badge)](LICENSE)
 
-> **Live Demo:** [https://autoflow-vyvd.onrender.com](https://autoflow-vyvd.onrender.com)  
-> *Test credentials provided below.*
+**AutoFlow** is a secure, full-stack workflow automation platform designed to streamline financial operations. It features granular **Role-Based Access Control (RBAC)**, an **Immutable Audit Ledger** for compliance (SOC2 readiness), and real-time financial analytics.
 
----
-
-## 📖 Overview
-
-**AutoFlow** is a secure, full-stack workflow automation platform designed to streamline financial operations for enterprises. It replaces manual invoice processing with a digital, role-based pipeline featuring granular access control, real-time analytics, and tamper-proof audit logging.
-
-Built to demonstrate **SOC2-ready architecture**, it enforces strict data immutability for audit trails and uses a state-machine approach for invoice lifecycle management.
+> **🚀 Live Demo:** [https://autoflow-vyvd.onrender.com](https://autoflow-vyvd.onrender.com)  
+> *Login credentials provided below.*
 
 ---
 
-## 📸 Dashboard Preview
+## 📸 Interface Preview
 
-![AutoFlow Dashboard](public/assets/screencapture-autoflow-vyvd-onrender-dashboard-html-2026-01-21-22_57_17.png)
-
----
-
-## 🚀 Key Features
-
-### 🛡️ Enterprise Security & RBAC
-* **Multi-Tier Access:** 4 distinct roles (**Admin, Finance, Manager, Employee**) with strict middleware guards ensuring users only access data relevant to their clearance level.
-* **JWT Authentication:** Stateless, secure session management with Bcrypt password hashing.
-
-### 🔒 Compliance & Auditing
-* **Immutable Ledger:** Custom Mongoose middleware prevents any modification or deletion of `AuditLog` records, mimicking blockchain immutability for compliance.
-* **Granular Tracking:** logs every action (Login, Approval, Rejection) with timestamps, actor IDs, and IP addresses.
-
-### 📊 Real-Time Analytics
-* **Aggregation Pipelines:** MongoDB aggregation is used to calculate live KPIs (Total Spend, Pending Actions, Rejection Rates) instantly.
-* **Interactive Visuals:** Dynamic Chart.js integration for spending trends and status distribution.
-
-### ⚡ Developer Experience
-* **Smart Environment Detection:** The frontend automatically detects its environment (`localhost` vs. `production`), eliminating the need for manual API URL configuration.
-* **Automated Seeding:** One-click database population script for rapid testing and deployment.
+| **Secure Login & Role Identification** | **Executive Dashboard & KPIs** |
+|:---:|:---:|
+| <img src="public/assets/screencapture-autoflow-vyvd-onrender-index-html-2026-01-21-23_43_25.png" width="100%" alt="Login Screen"> | <img src="public/assets/screencapture-autoflow-vyvd-onrender-dashboard-html-2026-01-21-22_57_17.png" width="100%" alt="Dashboard"> |
+| **RBAC Approval Queue** | **Financial Analytics & Reporting** |
+| <img src="public/assets/screencapture-autoflow-vyvd-onrender-approvals-html-2026-01-21-23_22_25.png" width="100%" alt="Approval Queue"> | <img src="public/assets/screencapture-autoflow-vyvd-onrender-reports-html-2026-01-21-23_22_57.png" width="100%" alt="Reports"> |
 
 ---
 
-## 🛠️ Tech Stack
+## 🌟 Key Features
 
-| Component | Technology | Key Usage |
-| :--- | :--- | :--- |
-| **Backend** | Node.js, Express.js | RESTful API, Middleware Guards |
-| **Database** | MongoDB Atlas | Data Persistence, Aggregation |
-| **ODM** | Mongoose | Schema Validation, Hooks |
-| **Frontend** | Vanilla JS (ES6+) | DOM Manipulation, Fetch API |
-| **Styling** | CSS3 (Variables) | Dark/Light Theme, Responsive Grid |
-| **Deployment**| Render | Cloud Hosting, CI/CD |
+### 🛡️ Security & Access Control
+* **Multi-Tier RBAC:** Four distinct roles (**Admin, Finance, Manager, Employee**) with strictly enforced permission guards on both frontend and backend.
+* **JWT Authentication:** Stateless, secure session management using JSON Web Tokens and `bcrypt` password hashing.
+* **Smart Environment Detection:** Frontend architecture automatically adapts to `localhost` or Production environments without code changes.
+
+### 📊 Compliance & Workflow
+* **Immutable Audit Logs:** A tamper-proof, append-only ledger records every critical action (Login, Approval, Rejection) with IP tracking, ensuring data integrity for audits.
+* **Approval State Machine:** Invoices move through a defined lifecycle (`Pending` → `Manager Approved` → `Finance Approved` or `Rejected`).
+* **Real-Time Analytics:** Dynamic charting and KPI aggregation using MongoDB Aggregation Pipelines to visualize spending trends and status distributions.
 
 ---
 
-## 🧪 Try It Out (Test Credentials)
+## 🛠️ Technical Architecture
 
-Use these accounts to explore the different role-based views in the live demo:
+* **Backend:** Node.js, Express.js (RESTful API)
+* **Database:** MongoDB Atlas, Mongoose ODM
+* **Frontend:** Vanilla JavaScript (ES6+), HTML5, CSS3 (Custom Variables & Dark Mode)
+* **Security Tools:** Helmet.js, CORS, Morgan (Logging)
+* **Deployment:** Render Cloud Hosting (CI/CD connected to GitHub)
 
-| Role | Email | Password | Capability |
+---
+
+## 🧪 Live Demo Credentials
+
+Test the Role-Based Access Control using these accounts on the [Live Site](https://autoflow-vyvd.onrender.com):
+
+| Role | Email | Password | Capability Scope |
 | :--- | :--- | :--- | :--- |
-| **Admin** | `admin@autoflow.local` | `password123` | Full system access, Audit Logs |
-| **Finance** | `finance@autoflow.local` | `password123` | Final approval, Financial Reports |
-| **Manager** | `manager@autoflow.local` | `password123` | First-level approval |
+| **Admin** | `admin@autoflow.local` | `password123` | Full system access, Audit Log viewer |
+| **Finance** | `finance@autoflow.local` | `password123` | Final approvals, Financial Reports |
+| **Manager** | `manager@autoflow.local` | `password123` | First-level approvals |
 | **Employee**| `john@autoflow.local` | `password123` | Submit invoices, View own history |
-
----
-
-## ⚡ Local Installation
-
-If you want to run this locally:
-
-1.  **Clone the repo**
-    ```bash
-    git clone [https://github.com/snmallick2401/AutoFlow-Invoice-Approval-Audit-Workflow-System.git](https://github.com/snmallick2401/AutoFlow-Invoice-Approval-Audit-Workflow-System.git)
-    cd AutoFlow-Invoice-Approval-Audit-Workflow-System
-    ```
-
-2.  **Install Dependencies**
-    ```bash
-    npm install
-    ```
-
-3.  **Configure Environment**
-    Create a `.env` file in the root directory:
-    ```env
-    PORT=5000
-    MONGO_URI=mongodb://localhost:27017/autoflow
-    JWT_SECRET=your_secret_key
-    ```
-
-4.  **Seed Database**
-    Initialize the database with the test users:
-    ```bash
-    node src/seed.js
-    ```
-
-5.  **Run Server**
-    ```bash
-    npm start
-    ```
-    Visit `http://localhost:5000` in your browser.
 
 ---
 
@@ -110,12 +62,15 @@ If you want to run this locally:
 
 ```bash
 AutoFlow/
-├── public/             # Frontend (HTML/CSS/JS)
-│   ├── js/api.js       # API Wrapper with Smart URL Detection
-│   └── css/theme.css   # Theme variables
-├── src/                # Backend Logic
-│   ├── controllers/    # Request Handlers
-│   ├── middleware/     # Auth & Role Guards
-│   ├── models/         # Database Schemas (User, Invoice, AuditLog)
-│   └── routes/         # API Endpoints
-└── server.js           # Entry Point
+├── src/
+│   ├── controllers/      # Business logic (Auth, Invoices, Audits)
+│   ├── middleware/       # JWT Auth & Role Guards
+│   ├── models/           # Mongoose Schemas (User, Invoice, AuditLog)
+│   ├── routes/           # API Endpoints
+│   └── utils/            # Helper functions (Audit Logger)
+├── public/               # Client-Side Code
+│   ├── js/               # Application Logic (API wrapper, Charts)
+│   ├── css/              # Styling (Themes, Components)
+│   └── assets/           # Static Assets & Screenshots
+├── uploads/              # Secure file storage for Invoices
+└── server.js             # Entry Point
