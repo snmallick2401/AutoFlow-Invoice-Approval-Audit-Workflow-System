@@ -14,7 +14,7 @@
 
 | Dashboard & KPIs | Role-Based Approval Queue |
 |:---:|:---:|
-| ![Dashboard]([[https://placehold.co/600x400?text=Dashboard+Screenshot](https://github.com/snmallick2401/AutoFlow-Invoice-Approval-Audit-Workflow-System/blob/main/public/assets/screencapture-autoflow-vyvd-onrender-dashboard-html-2026-01-21-22_57_17.png)](https://github.com/snmallick2401/AutoFlow-Invoice-Approval-Audit-Workflow-System/blob/main/public/assets/screencapture-autoflow-vyvd-onrender-dashboard-html-2026-01-21-22_57_17.png)) | ![Approvals](https://placehold.co/600x400?text=Approval+Queue) |
+| ![Dashboard](https://placehold.co/600x400?text=Dashboard+Screenshot) | ![Approvals](https://placehold.co/600x400?text=Approval+Queue) |
 
 | Immutable Audit Logs | Interactive Analytics |
 |:---:|:---:|
