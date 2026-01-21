@@ -1,4 +1,5 @@
 // backend/src/routes/authRoutes.js
+
 const express = require("express");
 const router = express.Router();
 
@@ -10,25 +11,22 @@ const {
 
 const { protect } = require("../middleware/authMiddleware");
 
+/* =================================================
+   PUBLIC ROUTES
+   The frontend (api.js) sends POST requests to these.
+================================================= */
+
+// POST /api/auth/register
 router.post("/register", register);
+
+// POST /api/auth/login
 router.post("/login", login);
+
+/* =================================================
+   PROTECTED ROUTES
+================================================= */
+
+// GET /api/auth/me
 router.get("/me", protect, getMe);
-
-// Method Not Allowed handlers
-router.all("/login", (req, res) => {
-  if (req.method !== "POST") {
-    return res.status(405).json({
-      message: "Method Not Allowed. Use POST /api/auth/login",
-    });
-  }
-});
-
-router.all("/register", (req, res) => {
-  if (req.method !== "POST") {
-    return res.status(405).json({
-      message: "Method Not Allowed. Use POST /api/auth/register",
-    });
-  }
-});
 
 module.exports = router;
